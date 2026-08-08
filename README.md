@@ -43,6 +43,14 @@ password: admin123
 
 To run on a different port: `PORT=8080 node server.js`.
 
+## Deployment
+
+Ready to share your family tree with others? See [DEPLOYMENT.md](DEPLOYMENT.md) for step-by-step guides to deploy on:
+- **Railway** (easiest, ~$5-10/month)
+- **Render** (free tier available)
+- **Vercel** (serverless)
+- **Self-hosted VPS** (full control)
+
 ## Roles
 
 - **Administrator** — everything an Assistant can do, plus creating, editing, deleting user
