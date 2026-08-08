@@ -1,0 +1,19 @@
+{
+  "name": "rootline-family-tree",
+  "version": "1.0.0",
+  "description": "A self-hosted family tree application with a visual, pan-and-zoom tree, user accounts, and photo uploads.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["family-tree", "genealogy"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^13.0.3",
+    "express": "^5.2.1",
+    "express-session": "^1.19.0",
+    "multer": "^2.2.0"
+  }
+}

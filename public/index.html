@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rootline — Family Tree</title>
+<link rel="stylesheet" href="/css/styles.css">
+<script src="/vendor/d3.min.js"></script>
+<script src="/vendor/jspdf.umd.min.js"></script>
+</head>
+<body>
+
+<!-- ═══════════ LOGIN ═══════════ -->
+<div id="loginScreen">
+  <div class="login-card">
+    <div class="login-emblem">🌳</div>
+    <h1>Rootline</h1>
+    <p class="sub">Sign in to view and manage your family tree</p>
+    <div id="loginError" class="login-error hidden"></div>
+    <form id="loginForm">
+      <div class="form-row">
+        <label class="field-label">Username</label>
+        <input id="loginUsername" type="text" class="text-field" autocomplete="username" required>
+      </div>
+      <div class="form-row">
+        <label class="field-label">Password</label>
+        <input id="loginPassword" type="password" class="text-field" autocomplete="current-password" required>
+      </div>
+      <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+    </form>
+    <p class="login-hint">First time here? Default administrator login:<br><b>admin</b> / <b>admin123</b> — please change this after signing in.</p>
+  </div>
+</div>
+
+<!-- ═══════════ APP SHELL ═══════════ -->
+<div id="app" class="hidden">
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">🌳</div>
+      <span class="brand-name">Rootline</span>
+    </div>
+    <div class="topbar-actions">
+      <div style="position:relative">
+        <button id="exportBtn" class="btn btn-outline btn-sm">Export ▾</button>
+        <div id="exportMenu" class="export-menu hidden">
+          <div class="export-menu-label">Share &amp; print</div>
+          <button type="button" id="exportPdfBtn" class="export-menu-item">📄 Export as PDF</button>
+          <button type="button" id="exportJpgBtn" class="export-menu-item">🖼️ Export as JPG</button>
+          <div class="export-menu-divider"></div>
+          <div class="export-menu-label">Backup &amp; transfer</div>
+          <button type="button" id="exportJsonBtn" class="export-menu-item">💾 Save Tree to File</button>
+          <button type="button" id="importJsonBtn" class="export-menu-item">📥 Import Tree from File</button>
+        </div>
+      </div>
+      <button id="manageUsersBtn" class="btn btn-outline btn-sm hidden">Manage Users</button>
+      <div class="user-chip" id="userChip">
+        <div class="user-avatar" id="userAvatar">–</div>
+        <div>
+          <div class="user-chip-name" id="userChipName">—</div>
+          <div class="user-chip-role" id="userChipRole">—</div>
+        </div>
+      </div>
+    </div>
+  </header>
+  <input type="file" id="importFileInput" accept=".json,application/json" class="hidden">
+
+  <div class="tree-wrap" id="treeWrap">
+    <svg id="treeSvg"><g id="treeRoot"></g></svg>
+
+    <div class="tree-controls">
+      <button class="zoom-btn" id="zoomInBtn" title="Zoom in">＋</button>
+      <button class="zoom-btn" id="zoomOutBtn" title="Zoom out">－</button>
+      <button class="zoom-btn" id="zoomResetBtn" title="Reset view">⤢</button>
+    </div>
+
+    <button class="fab-add-ancestor" id="addAncestorBtn">
+      <span style="font-size:16px;line-height:1">＋</span> Add Ancestor
+    </button>
+
+    <div class="empty-tree hidden" id="emptyTree">
+      <div class="e-icon">🌱</div>
+      <h2>Your tree is empty</h2>
+      <p>Every family tree starts with its first ancestor. Add one to begin — you can branch out sons, daughters, and further generations from there.</p>
+      <button class="btn btn-primary" id="emptyAddAncestorBtn">＋ Add First Ancestor</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ PERSON DETAIL PANEL ═══════════ -->
+<div class="overlay" id="personPanelOverlay"></div>
+<aside class="side-panel" id="personPanel">
+  <div class="panel-head">
+    <h2>Person</h2>
+    <button class="panel-close" id="personPanelClose">✕</button>
+  </div>
+  <div class="panel-body">
+    <div class="detail-photo-row">
+      <div class="detail-photo" id="detailPhotoWrap"><span class="person-initial">?</span></div>
+      <div class="detail-photo-actions">
+        <button class="btn btn-outline btn-sm file-btn">
+          Change Photo
+          <input type="file" id="detailPhotoInput" accept="image/*">
+        </button>
+        <button class="btn btn-ghost btn-sm" id="detailRemovePhotoBtn">Remove Photo</button>
+      </div>
+    </div>
+
+    <div class="form-row">
+      <label class="field-label">First Name</label>
+      <input id="detailName" type="text" class="text-field">
+    </div>
+
+    <div class="form-row">
+      <label class="field-label">Gender</label>
+      <div class="pill-group">
+        <button type="button" class="pill-opt" data-gender="male" id="detailGenderMale">Male</button>
+        <button type="button" class="pill-opt" data-gender="female" id="detailGenderFemale">Female</button>
+      </div>
+    </div>
+
+    <div class="meta-line" id="detailFatherLine"></div>
+    <div class="meta-line" id="detailChildrenLine"></div>
+
+    <div class="section-label">Add a relative</div>
+    <div class="relation-grid">
+      <button class="relation-btn" id="addSonBtn"><span class="r-icon">👦</span>Add Son</button>
+      <button class="relation-btn" id="addDaughterBtn"><span class="r-icon">👧</span>Add Daughter</button>
+      <button class="relation-btn" id="addFatherBtn" style="grid-column:1 / -1"><span class="r-icon">⬆️</span>Add Father (extend upward)</button>
+    </div>
+  </div>
+  <div class="panel-footer">
+    <button class="btn btn-danger-outline" id="detailDeleteBtn">Delete</button>
+    <button class="btn btn-primary" id="detailSaveBtn" style="margin-left:auto">Save Changes</button>
+  </div>
+</aside>
+
+<!-- ═══════════ NEW RELATIVE MODAL ═══════════ -->
+<div class="overlay" id="relFormOverlay"></div>
+<div class="modal-box" id="relFormModal">
+  <h3 id="relFormTitle">Add Person</h3>
+  <p class="sub" id="relFormSub">Fill in their details below.</p>
+
+  <div class="form-row">
+    <label class="field-label">First Name</label>
+    <input id="relFormName" type="text" class="text-field" placeholder="e.g. Elena">
+  </div>
+
+  <div class="form-row">
+    <label class="field-label">Gender</label>
+    <div class="pill-group">
+      <button type="button" class="pill-opt" data-gender="male" id="relGenderMale">Male</button>
+      <button type="button" class="pill-opt" data-gender="female" id="relGenderFemale">Female</button>
+    </div>
+  </div>
+
+  <div class="form-row">
+    <label class="field-label">Photo (optional)</label>
+    <div class="photo-drop" id="relPhotoDrop">
+      <img id="relPhotoPreview" class="photo-drop-preview hidden">
+      <span id="relPhotoIcon" style="font-size:22px">🖼️</span>
+      <div>
+        <div class="photo-drop-text">Click to upload a photo</div>
+        <div class="photo-drop-sub">PNG, JPG, or WEBP — up to 5MB</div>
+      </div>
+      <input type="file" id="relPhotoInput" accept="image/*">
+    </div>
+  </div>
+
+  <div class="form-row" style="display:flex;gap:10px;margin-top:22px">
+    <button class="btn btn-outline" id="relFormCancel" style="flex:1">Cancel</button>
+    <button class="btn btn-primary" id="relFormSave" style="flex:1">Save</button>
+  </div>
+</div>
+
+<!-- ═══════════ ADMIN: MANAGE USERS ═══════════ -->
+<div class="overlay" id="adminPanelOverlay"></div>
+<aside class="side-panel" id="adminPanel" style="width:480px">
+  <div class="panel-head">
+    <h2>Manage Users</h2>
+    <button class="panel-close" id="adminPanelClose">✕</button>
+  </div>
+  <div class="panel-body">
+    <div class="section-label">Team</div>
+    <table class="admin-table">
+      <thead><tr><th>Name</th><th>Role</th><th></th></tr></thead>
+      <tbody id="usersTableBody"></tbody>
+    </table>
+
+    <div class="section-label">Add a user</div>
+    <div class="form-row">
+      <label class="field-label">Display Name</label>
+      <input id="newUserDisplayName" type="text" class="text-field" placeholder="e.g. Maria Gomez">
+    </div>
+    <div class="form-row">
+      <label class="field-label">Username</label>
+      <input id="newUserUsername" type="text" class="text-field" placeholder="e.g. mgomez">
+    </div>
+    <div class="form-row">
+      <label class="field-label">Password</label>
+      <input id="newUserPassword" type="password" class="text-field" placeholder="At least 6 characters">
+    </div>
+    <div class="form-row">
+      <label class="field-label">Role</label>
+      <div class="pill-group">
+        <button type="button" class="pill-opt" data-role="assistant" id="roleAssistantBtn">Assistant</button>
+        <button type="button" class="pill-opt" data-role="admin" id="roleAdminBtn">Administrator</button>
+      </div>
+    </div>
+    <button class="btn btn-primary btn-block" id="createUserBtn">＋ Create User</button>
+  </div>
+</aside>
+
+<!-- ═══════════ ACCOUNT MENU (self password change) ═══════════ -->
+<div class="overlay" id="accountOverlay"></div>
+<div class="modal-box" id="accountModal">
+  <h3>Your Account</h3>
+  <p class="sub" id="accountSub"></p>
+  <div class="section-label" style="margin-top:4px">Change password</div>
+  <div class="form-row">
+    <label class="field-label">Current Password</label>
+    <input id="curPasswordInput" type="password" class="text-field">
+  </div>
+  <div class="form-row">
+    <label class="field-label">New Password</label>
+    <input id="newPasswordInput" type="password" class="text-field" placeholder="At least 6 characters">
+  </div>
+  <button class="btn btn-primary btn-block" id="changePasswordBtn">Update Password</button>
+  <button class="btn btn-outline btn-block" id="logoutBtn" style="margin-top:10px">Log Out</button>
+</div>
+
+<!-- ═══════════ CONFIRM DIALOG ═══════════ -->
+<div class="overlay" id="confirmOverlay"></div>
+<div class="modal-box confirm-box" id="confirmModal">
+  <h3 id="confirmTitle">Are you sure?</h3>
+  <p class="sub" id="confirmMessage"></p>
+  <div class="confirm-actions">
+    <button class="btn btn-outline" id="confirmCancelBtn">Cancel</button>
+    <button class="btn btn-danger-outline" id="confirmOkBtn">Confirm</button>
+  </div>
+</div>
+
+<div id="toastContainer"></div>
+
+<script src="/js/app.js"></script>
+</body>
+</html>
