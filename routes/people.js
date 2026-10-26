@@ -1,76 +1,95 @@
 const express = require('express');
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const { db, UPLOAD_DIR, isPublicTreeEnabled } = require('../db');
+const { db, isPublicTreeEnabled } = require('../db');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
-
+const MAX_PHOTO_SIZE = 5 * 1024 * 1024;
+const MIME_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
 const upload = multer({
-  storage: multer.diskStorage({
-    destination: (req, file, cb) => cb(null, UPLOAD_DIR),
-    filename: (req, file, cb) => {
-      const ext = path.extname(file.originalname).toLowerCase() || '.jpg';
-      cb(null, 'p_' + Date.now() + '_' + Math.round(Math.random() * 1e6) + ext);
-    },
-  }),
-  limits: { fileSize: 5 * 1024 * 1024 },
+  storage: multer.memoryStorage(),
+  limits: { fileSize: MAX_PHOTO_SIZE },
   fileFilter: (req, file, cb) => {
-    if (/^image\/(png|jpe?g|webp|gif)$/i.test(file.mimetype)) cb(null, true);
+    if (MIME_TYPES.has(file.mimetype)) cb(null, true);
     else cb(new Error('Only PNG, JPG, WEBP, or GIF image files are allowed'));
   },
 });
 
-function removePhotoFile(photoPath) {
-  if (!photoPath) return;
-  const full = path.join(__dirname, '..', photoPath);
-  if (fs.existsSync(full)) {
-    try { fs.unlinkSync(full); } catch (e) { /* ignore */ }
-  }
+function personSelect(includeAuditFields, where = '') {
+  const auditFields = includeAuditFields ? ', created_by, created_at, updated_at' : '';
+  return `SELECT id, first_name, gender, father_id,
+                 CASE WHEN photo_data IS NOT NULL THEN '/api/people/' || id || '/photo' END AS photo_path
+                 ${auditFields}
+          FROM people ${where} ORDER BY id ASC`;
 }
 
-// ── list everyone (client builds the tree) ──
-router.get('/', (req, res) => {
+function parsePhotoData(photoData) {
+  if (photoData == null) return null;
+  if (typeof photoData !== 'string') throw new Error('Backup contains invalid photo data');
+  const match = /^data:(image\/(?:png|jpe?g|webp|gif));base64,([A-Za-z0-9+/]+={0,2})$/i.exec(photoData);
+  if (!match) throw new Error('Backup contains invalid photo data');
+  const data = Buffer.from(match[2], 'base64');
+  if (!data.length || data.length > MAX_PHOTO_SIZE) {
+    throw new Error('Backup photos must be no larger than 5 MB');
+  }
+  const mimeType = match[1].toLowerCase().replace('image/jpg', 'image/jpeg');
+  return { data, mimeType };
+}
+
+function parseId(value) {
+  if (typeof value !== 'number' && typeof value !== 'string') return null;
+  if (typeof value === 'string' && !/^\d+$/.test(value)) return null;
+  const id = Number(value);
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+}
+
+router.get('/', async (req, res) => {
   const authenticated = req.session && req.session.user;
-  if (!authenticated && !isPublicTreeEnabled()) {
+  if (!authenticated && !(await isPublicTreeEnabled())) {
     return res.status(401).json({ error: 'Not authenticated' });
   }
-  const rows = db.prepare(
-    authenticated
-      ? 'SELECT * FROM people ORDER BY id ASC'
-      : 'SELECT id, first_name, gender, father_id, photo_path FROM people ORDER BY id ASC'
-  ).all();
+  const { rows } = await db.query(personSelect(Boolean(authenticated)));
   res.json({ people: rows });
+});
+
+router.get('/:id/photo', async (req, res) => {
+  const authenticated = req.session && req.session.user;
+  if (!authenticated && !(await isPublicTreeEnabled())) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  const id = parseId(req.params.id);
+  if (!id) return res.sendStatus(404);
+  const { rows } = await db.query(
+    'SELECT photo_data, photo_mime FROM people WHERE id = $1',
+    [id]
+  );
+  if (!rows[0] || !rows[0].photo_data) return res.sendStatus(404);
+
+  res.set({
+    'Content-Type': rows[0].photo_mime,
+    'Content-Length': rows[0].photo_data.length,
+    'Cache-Control': 'private, no-store',
+    'X-Content-Type-Options': 'nosniff',
+  });
+  res.end(rows[0].photo_data);
 });
 
 router.use(requireAuth);
 
-// ── export the full tree as one portable, self-contained JSON file (photos embedded as base64) ──
-router.get('/export', (req, res) => {
-  const rows = db.prepare('SELECT * FROM people ORDER BY id ASC').all();
+router.get('/export', async (req, res) => {
+  const { rows } = await db.query(
+    'SELECT id, first_name, gender, father_id, photo_data, photo_mime FROM people ORDER BY id ASC'
+  );
 
-  const people = rows.map((p) => {
-    let photo_data = null;
-    if (p.photo_path) {
-      try {
-        const full = path.join(__dirname, '..', p.photo_path);
-        if (fs.existsSync(full)) {
-          let ext = path.extname(full).slice(1).toLowerCase() || 'jpg';
-          if (ext === 'jpg') ext = 'jpeg';
-          const b64 = fs.readFileSync(full).toString('base64');
-          photo_data = `data:image/${ext};base64,${b64}`;
-        }
-      } catch (e) { /* skip an unreadable photo rather than failing the whole export */ }
-    }
-    return {
-      id: p.id,
-      first_name: p.first_name,
-      gender: p.gender,
-      father_id: p.father_id,
-      photo_data,
-    };
-  });
+  const people = rows.map((person) => ({
+    id: person.id,
+    first_name: person.first_name,
+    gender: person.gender,
+    father_id: person.father_id,
+    photo_data: person.photo_data
+      ? `data:${person.photo_mime};base64,${person.photo_data.toString('base64')}`
+      : null,
+  }));
 
   const payload = {
     format: 'rootline-family-tree-backup',
@@ -84,75 +103,115 @@ router.get('/export', (req, res) => {
   res.send(JSON.stringify(payload));
 });
 
-// ── import a backup file, replacing the entire current tree (admin only) ──
-router.post('/import', requireAdmin, (req, res) => {
+router.post('/import', requireAdmin, async (req, res) => {
   const body = req.body || {};
   if (body.format !== 'rootline-family-tree-backup' || !Array.isArray(body.people)) {
     return res.status(400).json({ error: 'This file is not a valid Rootline backup' });
   }
-  const incoming = body.people;
-  for (const p of incoming) {
-    if (!p || typeof p.first_name !== 'string' || !p.first_name.trim() || !['male', 'female'].includes(p.gender)) {
+  const incomingIds = new Set();
+  const parentById = new Map();
+  for (const person of body.people) {
+    const id = person && parseId(person.id);
+    const fatherId = person && person.father_id != null ? parseId(person.father_id) : null;
+    if (
+      !person ||
+      !id ||
+      incomingIds.has(id) ||
+      typeof person.first_name !== 'string' ||
+      !person.first_name.trim() ||
+      !['male', 'female'].includes(person.gender) ||
+      (person.father_id != null && !fatherId)
+    ) {
       return res.status(400).json({ error: 'Backup file contains invalid person records' });
     }
+    incomingIds.add(id);
+    parentById.set(id, fatherId);
   }
-
-  const existingPhotos = db.prepare('SELECT photo_path FROM people').all();
-
-  const runImport = db.transaction((records) => {
-    existingPhotos.forEach((r) => removePhotoFile(r.photo_path));
-    db.prepare('DELETE FROM people').run();
-
-    const now = Date.now();
-    const oldToNew = new Map();
-    const insertStmt = db.prepare(
-      `INSERT INTO people (first_name, gender, father_id, photo_path, created_by, created_at, updated_at)
-       VALUES (?, ?, NULL, ?, ?, ?, ?)`
-    );
-
-    records.forEach((p) => {
-      let photoPath = null;
-      if (typeof p.photo_data === 'string') {
-        const match = p.photo_data.match(/^data:image\/(png|jpe?g|webp|gif);base64,(.+)$/i);
-        if (match) {
-          const ext = /jpe?g/i.test(match[1]) ? 'jpg' : match[1].toLowerCase();
-          const filename = 'p_' + Date.now() + '_' + Math.round(Math.random() * 1e6) + '.' + ext;
-          fs.writeFileSync(path.join(UPLOAD_DIR, filename), Buffer.from(match[2], 'base64'));
-          photoPath = '/uploads/' + filename;
-        }
-      }
-      const info = insertStmt.run(p.first_name.trim(), p.gender, photoPath, req.session.user.id, now, now);
-      oldToNew.set(p.id, info.lastInsertRowid);
-    });
-
-    const relinkStmt = db.prepare('UPDATE people SET father_id = ? WHERE id = ?');
-    records.forEach((p) => {
-      if (p.father_id != null && oldToNew.has(p.father_id) && oldToNew.has(p.id)) {
-        relinkStmt.run(oldToNew.get(p.father_id), oldToNew.get(p.id));
-      }
-    });
-  });
-
   try {
-    runImport(incoming);
-  } catch (e) {
-    console.error(e);
-    return res.status(500).json({ error: 'Import failed: ' + e.message });
+    for (const person of body.people) parsePhotoData(person.photo_data);
+  } catch (err) {
+    return res.status(400).json({ error: err.message });
+  }
+  for (const person of body.people) {
+    const id = parseId(person.id);
+    const fatherId = parentById.get(id);
+    if (fatherId != null && !incomingIds.has(fatherId)) {
+      return res.status(400).json({ error: 'Backup contains a missing parent reference' });
+    }
+    if (fatherId === id) {
+      return res.status(400).json({ error: 'A person cannot be their own parent' });
+    }
+  }
+  const completed = new Set();
+  for (const id of incomingIds) {
+    const path = new Set();
+    let currentId = id;
+    while (currentId != null && !completed.has(currentId)) {
+      if (path.has(currentId)) {
+        return res.status(400).json({ error: 'Backup contains a circular family relationship' });
+      }
+      path.add(currentId);
+      currentId = parentById.get(currentId);
+    }
+    path.forEach((pathId) => completed.add(pathId));
   }
 
-  const people = db.prepare('SELECT * FROM people ORDER BY id ASC').all();
-  res.json({ ok: true, count: people.length, people });
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+    await client.query('DELETE FROM people');
+
+    const oldToNew = new Map();
+    const now = Date.now();
+    for (const person of body.people) {
+      const photo = parsePhotoData(person.photo_data);
+      const result = await client.query(
+        `INSERT INTO people (first_name, gender, photo_data, photo_mime, created_by, created_at, updated_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $6)
+         RETURNING id`,
+        [
+          person.first_name.trim(),
+          person.gender,
+          photo ? photo.data : null,
+          photo ? photo.mimeType : null,
+          req.session.user.id,
+          now,
+        ]
+      );
+      oldToNew.set(parseId(person.id), result.rows[0].id);
+    }
+
+    for (const person of body.people) {
+      const id = parseId(person.id);
+      const fatherId = parentById.get(id);
+      if (fatherId != null) {
+        await client.query(
+          'UPDATE people SET father_id = $1 WHERE id = $2',
+          [oldToNew.get(fatherId), oldToNew.get(id)]
+        );
+      }
+    }
+
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    console.error('Family tree import failed:', err);
+    return res.status(500).json({ error: 'Import failed' });
+  } finally {
+    client.release();
+  }
+
+  const { rows } = await db.query(personSelect(true));
+  res.json({ ok: true, count: rows.length, people: rows });
 });
 
-// ── create a person: root ancestor, father, son, or daughter ──
 router.post('/', (req, res, next) => {
   upload.single('photo')(req, res, (err) => {
     if (err) return res.status(400).json({ error: err.message });
     next();
   });
-}, (req, res) => {
+}, async (req, res) => {
   const { first_name, gender, relation, relative_id } = req.body || {};
-
   if (!first_name || !first_name.trim()) {
     return res.status(400).json({ error: 'First name is required' });
   }
@@ -163,97 +222,125 @@ router.post('/', (req, res, next) => {
     return res.status(400).json({ error: 'Lineage must be root, father, son, or daughter' });
   }
 
-  let fatherIdForNew = null;
-  let relativeToRepoint = null;
+  const client = await db.connect();
+  try {
+    await client.query('BEGIN');
+    let fatherId = null;
+    let relativeToRepoint = null;
 
-  if (relation === 'son' || relation === 'daughter') {
-    const relId = Number(relative_id);
-    const relative = db.prepare('SELECT * FROM people WHERE id = ?').get(relId);
-    if (!relative) return res.status(400).json({ error: 'Relative not found' });
-    fatherIdForNew = relId;
-  } else if (relation === 'father') {
-    const relId = Number(relative_id);
-    const relative = db.prepare('SELECT * FROM people WHERE id = ?').get(relId);
-    if (!relative) return res.status(400).json({ error: 'Relative not found' });
-    if (relative.father_id) {
-      return res.status(400).json({ error: 'This person already has a father recorded in the tree' });
+    if (relation !== 'root') {
+      const relativeResult = await client.query(
+        'SELECT id, father_id FROM people WHERE id = $1 FOR UPDATE',
+        [parseId(relative_id)]
+      );
+      const relative = relativeResult.rows[0];
+      if (!relative) {
+        await client.query('ROLLBACK');
+        return res.status(400).json({ error: 'Relative not found' });
+      }
+      if (relation === 'son' || relation === 'daughter') fatherId = relative.id;
+      if (relation === 'father') {
+        if (relative.father_id) {
+          await client.query('ROLLBACK');
+          return res.status(400).json({ error: 'This person already has a father recorded in the tree' });
+        }
+        relativeToRepoint = relative.id;
+      }
     }
-    fatherIdForNew = null;
-    relativeToRepoint = relId;
+
+    const now = Date.now();
+    const photo = req.file || null;
+    const result = await client.query(
+      `INSERT INTO people (first_name, gender, father_id, photo_data, photo_mime, created_by, created_at, updated_at)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $7)
+       RETURNING id`,
+      [
+        first_name.trim(),
+        gender,
+        fatherId,
+        photo ? photo.buffer : null,
+        photo ? photo.mimetype : null,
+        req.session.user.id,
+        now,
+      ]
+    );
+    const newId = result.rows[0].id;
+
+    if (relativeToRepoint) {
+      await client.query(
+        'UPDATE people SET father_id = $1, updated_at = $2 WHERE id = $3',
+        [newId, now, relativeToRepoint]
+      );
+    }
+
+    await client.query('COMMIT');
+    const created = await db.query(personSelect(true, 'WHERE id = $1'), [newId]);
+    res.status(201).json({ person: created.rows[0] });
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
   }
-  // relation === 'root' → fatherIdForNew stays null, no relative needed
-
-  const now = Date.now();
-  const photoPath = req.file ? '/uploads/' + req.file.filename : null;
-
-  const info = db
-    .prepare(
-      `INSERT INTO people (first_name, gender, father_id, photo_path, created_by, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`
-    )
-    .run(first_name.trim(), gender, fatherIdForNew, photoPath, req.session.user.id, now, now);
-
-  const newId = info.lastInsertRowid;
-
-  if (relativeToRepoint) {
-    db.prepare('UPDATE people SET father_id = ?, updated_at = ? WHERE id = ?').run(newId, now, relativeToRepoint);
-  }
-
-  const created = db.prepare('SELECT * FROM people WHERE id = ?').get(newId);
-  res.status(201).json({ person: created });
 });
 
-// ── edit a person's name / gender / photo ──
 router.put('/:id', (req, res, next) => {
   upload.single('photo')(req, res, (err) => {
     if (err) return res.status(400).json({ error: err.message });
     next();
   });
-}, (req, res) => {
-  const id = Number(req.params.id);
-  const person = db.prepare('SELECT * FROM people WHERE id = ?').get(id);
+}, async (req, res) => {
+  const id = parseId(req.params.id);
+  if (!id) return res.status(404).json({ error: 'Person not found' });
+  const { rows } = await db.query('SELECT first_name, gender FROM people WHERE id = $1', [id]);
+  const person = rows[0];
   if (!person) return res.status(404).json({ error: 'Person not found' });
 
   const { first_name, gender } = req.body || {};
-  const now = Date.now();
-
-  let photoPath = person.photo_path;
-  if (req.file) {
-    removePhotoFile(person.photo_path);
-    photoPath = '/uploads/' + req.file.filename;
-  }
-
-  db.prepare('UPDATE people SET first_name = ?, gender = ?, photo_path = ?, updated_at = ? WHERE id = ?').run(
-    first_name && first_name.trim() ? first_name.trim() : person.first_name,
-    ['male', 'female'].includes(gender) ? gender : person.gender,
-    photoPath,
-    now,
-    id
+  const photo = req.file || null;
+  await db.query(
+    `UPDATE people
+     SET first_name = $1, gender = $2,
+         photo_data = CASE WHEN $3::boolean THEN $4::bytea ELSE photo_data END,
+         photo_mime = CASE WHEN $3::boolean THEN $5::text ELSE photo_mime END,
+         updated_at = $6
+     WHERE id = $7`,
+    [
+      first_name && first_name.trim() ? first_name.trim() : person.first_name,
+      ['male', 'female'].includes(gender) ? gender : person.gender,
+      Boolean(photo),
+      photo ? photo.buffer : null,
+      photo ? photo.mimetype : null,
+      Date.now(),
+      id,
+    ]
   );
 
-  const updated = db.prepare('SELECT * FROM people WHERE id = ?').get(id);
-  res.json({ person: updated });
+  const updated = await db.query(personSelect(true, 'WHERE id = $1'), [id]);
+  res.json({ person: updated.rows[0] });
 });
 
-// ── remove a person's photo only ──
-router.delete('/:id/photo', (req, res) => {
-  const id = Number(req.params.id);
-  const person = db.prepare('SELECT * FROM people WHERE id = ?').get(id);
-  if (!person) return res.status(404).json({ error: 'Person not found' });
-  removePhotoFile(person.photo_path);
-  db.prepare('UPDATE people SET photo_path = NULL, updated_at = ? WHERE id = ?').run(Date.now(), id);
+router.delete('/:id/photo', async (req, res) => {
+  const id = parseId(req.params.id);
+  if (!id) return res.status(404).json({ error: 'Person not found' });
+  const result = await db.query(
+    'UPDATE people SET photo_data = NULL, photo_mime = NULL, updated_at = $1 WHERE id = $2',
+    [Date.now(), id]
+  );
+  if (result.rowCount === 0) return res.status(404).json({ error: 'Person not found' });
   res.json({ ok: true });
 });
 
-// ── delete a person (optionally cascading to descendants) ──
-router.delete('/:id', (req, res) => {
-  const id = Number(req.params.id);
-  const person = db.prepare('SELECT * FROM people WHERE id = ?').get(id);
+router.delete('/:id', async (req, res) => {
+  const id = parseId(req.params.id);
+  if (!id) return res.status(404).json({ error: 'Person not found' });
+  const { rows } = await db.query('SELECT id, first_name FROM people WHERE id = $1', [id]);
+  const person = rows[0];
   if (!person) return res.status(404).json({ error: 'Person not found' });
 
-  const childCount = db.prepare('SELECT COUNT(*) AS c FROM people WHERE father_id = ?').get(id).c;
+  const children = await db.query('SELECT COUNT(*) AS count FROM people WHERE father_id = $1', [id]);
+  const childCount = Number(children.rows[0].count);
   const cascade = req.query.cascade === 'true';
-
   if (childCount > 0 && !cascade) {
     return res.status(409).json({
       error: 'has_children',
@@ -264,25 +351,19 @@ router.delete('/:id', (req, res) => {
 
   let idsToDelete = [id];
   if (cascade && childCount > 0) {
-    const rows = db
-      .prepare(
-        `WITH RECURSIVE descendants(id) AS (
-           SELECT id FROM people WHERE id = ?
-           UNION ALL
-           SELECT p.id FROM people p JOIN descendants d ON p.father_id = d.id
-         )
-         SELECT id FROM descendants`
-      )
-      .all(id);
-    idsToDelete = rows.map((r) => r.id);
+    const descendants = await db.query(
+      `WITH RECURSIVE descendants(id) AS (
+         SELECT id FROM people WHERE id = $1
+         UNION
+         SELECT person.id FROM people person JOIN descendants d ON person.father_id = d.id
+       )
+       SELECT id FROM descendants`,
+      [id]
+    );
+    idsToDelete = descendants.rows.map((row) => row.id);
   }
 
-  const placeholders = idsToDelete.map(() => '?').join(',');
-  const photoRows = db.prepare(`SELECT photo_path FROM people WHERE id IN (${placeholders})`).all(...idsToDelete);
-  photoRows.forEach((r) => removePhotoFile(r.photo_path));
-
-  db.prepare(`DELETE FROM people WHERE id IN (${placeholders})`).run(...idsToDelete);
-
+  await db.query('DELETE FROM people WHERE id = ANY($1::bigint[])', [idsToDelete]);
   res.json({ ok: true, deleted: idsToDelete });
 });
 

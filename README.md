@@ -7,9 +7,9 @@ pan-and-zoom diagram — ancestors at the top ("roots"), descendants branching d
 ## Tech stack
 
 - **Backend:** Node.js + Express
-- **Database:** SQLite (via `better-sqlite3`) — a single local file, no database server to install
+- **Database:** PostgreSQL (Neon or another PostgreSQL provider)
 - **Auth:** Session cookies + hashed passwords (`bcryptjs`)
-- **Photo uploads:** `multer`, stored on disk under `/uploads`
+- **Photo uploads:** `multer`; image bytes are stored in PostgreSQL
 - **Frontend:** Plain HTML/CSS/JavaScript, tree rendered with [D3.js](https://d3js.org/). D3
   and [jsPDF](https://github.com/parallax/jsPDF) (used for the PDF export) are bundled locally
   under `public/vendor/` rather than loaded from a CDN, so the app works fully offline and
@@ -20,8 +20,13 @@ No build step, no framework tooling required — just Node.
 ## Requirements
 
 - [Node.js](https://nodejs.org/) 18 or newer
+- A PostgreSQL database (for example, a free Neon project)
 
 ## Setup
+
+1. Create a PostgreSQL database and copy its connection string.
+2. Copy `.env.example` to `.env`, then fill in `DATABASE_URL` and a private `SESSION_SECRET`.
+3. Install the dependencies once, then start the app:
 
 ```bash
 npm install
@@ -32,8 +37,7 @@ Run `npm install` once after downloading/cloning the project (or when its depend
 
 Then open **http://localhost:3002** in your browser.
 
-On first run, the app automatically creates an administrator account and prints the
-credentials to the terminal:
+On first run with an empty database, the app creates an administrator account:
 
 ```
 username: admin
@@ -47,11 +51,7 @@ The app uses port **3002** by default. Hosting platforms can override this with 
 
 ## Deployment
 
-Ready to share your family tree with others? See [DEPLOYMENT.md](DEPLOYMENT.md) for step-by-step guides to deploy on:
-- **Railway** (easiest, ~$5-10/month)
-- **Render** (free tier available)
-- **Vercel** (serverless)
-- **Self-hosted VPS** (full control)
+See [DEPLOYMENT.md](DEPLOYMENT.md) for Render + Neon setup and the SQLite migration procedure.
 
 ## Roles
 
@@ -106,24 +106,26 @@ The **Export** button in the top bar has two groups of options:
 
 ```
 server.js              Express app entry point
-db.js                   SQLite schema + first-run admin seed
+db.js                   PostgreSQL schema + first-run admin seed
 middleware/auth.js       requireAuth / requireAdmin guards
 routes/auth.js           login, logout, session check, self password change
 routes/users.js          admin-only user management (CRUD)
 routes/people.js         family tree CRUD + photo upload + cascade delete
+scripts/migrate-sqlite-to-postgres.js  one-time SQLite migration utility
 public/index.html        app shell (login screen + main UI)
 public/css/styles.css    styling
 public/js/app.js         all frontend logic: auth flow, D3 tree rendering, panels, admin UI
 public/vendor/            self-hosted D3 and jsPDF bundles (no CDN dependency)
-data/                     SQLite database file lives here (created automatically)
-uploads/                  uploaded photos live here (created automatically)
 ```
 
 ## Data & backups
 
-Everything lives in `data/familytree.db` plus the image files in `uploads/`. To back up your
-tree, copy both folders. To reset everything, stop the server and delete the contents of
-`data/` and `uploads/` — a fresh admin account will be created the next time you start it.
+The PostgreSQL database stores accounts, settings, people, relationships, and photo bytes.
+Use the in-app tree backup for people/photos/relationships. To move an existing SQLite
+installation including accounts and settings, run
+`npm run migrate:sqlite -- <sqlite-file> <uploads-folder>` with `DATABASE_URL` set to the
+destination PostgreSQL database. Migration refuses to overwrite existing tree data and
+requires the photo files referenced by SQLite.
 
 ## Notes on production use
 

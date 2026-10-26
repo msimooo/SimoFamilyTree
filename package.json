@@ -4,16 +4,25 @@
   "description": "A self-hosted family tree application with a visual, pan-and-zoom tree, user accounts, and photo uploads.",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "build": "node --check server.js && node --check db.js && node --check middleware/auth.js && node --check routes/auth.js && node --check routes/users.js && node --check routes/people.js && node --check routes/settings.js && node --check scripts/migrate-sqlite-to-postgres.js && node --check public/js/app.js",
+    "start": "node server.js",
+    "migrate:sqlite": "node scripts/migrate-sqlite-to-postgres.js"
   },
-  "keywords": ["family-tree", "genealogy"],
+  "keywords": [
+    "family-tree",
+    "genealogy"
+  ],
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@neon/config": "^1.9.4",
+    "@neon/env": "^1.6.5",
     "bcryptjs": "^3.0.3",
     "better-sqlite3": "^13.0.3",
+    "dotenv": "^16.6.1",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
-    "multer": "^2.2.0"
+    "multer": "^2.2.0",
+    "pg": "^8.16.3"
   }
 }

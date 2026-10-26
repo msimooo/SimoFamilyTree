@@ -1,194 +1,78 @@
-# Deployment Guide for SimoFamilyTree
+# Deploy Rootline with Neon and Render
 
-Your Rootline Family Tree project is now on GitHub and ready to deploy! Follow the guide below for your preferred platform.
+The app uses PostgreSQL for accounts, family-tree records, settings, and photo bytes. It
+does not require a Render persistent disk. Neon free-tier limits and availability can change;
+check the provider's current pricing before relying on it for production data.
 
-## ✅ GitHub Repository
+## 1. Create a Neon database
 
-Your code is pushed to: **https://github.com/msimooo/SimoFamilyTree**
+1. Create a project at [neon.tech](https://neon.tech).
+2. Copy the **pooled** connection string from the Neon dashboard. It should include
+   `sslmode=require`.
+3. Keep the connection string private. It grants access to your database.
 
----
+## 2. Deploy the app on Render
 
-## 🚀 Deployment Options
+1. Create a Render **Web Service** from the GitHub repository.
+2. Set **Build Command** to `npm install` and **Start Command** to `npm start`.
+3. Add these environment variables:
+   - `DATABASE_URL`: the Neon pooled connection string.
+   - `SESSION_SECRET`: a long, randomly generated secret.
+4. Deploy. The app creates its PostgreSQL tables on startup and creates the default
+   `admin` / `admin123` account only if the database has no users. Change this password
+   immediately.
 
-### **Option 1: Railway.app (Recommended - Easiest)**
+Render supplies `PORT` automatically; local runs use port `3002`. Do not set `DATA_DIR` or
+`UPLOAD_DIR` for this PostgreSQL version.
 
-Railway is the fastest option with excellent Node.js support.
+## 3. Move existing SQLite data (optional)
 
-1. Go to [https://railway.app](https://railway.app)
-2. Click **"Create New Project"**
-3. Select **"Deploy from GitHub repo"**
-4. Authorize and select **`SimoFamilyTree`** repository
-5. Railway auto-detects Node.js. Wait for it to build (2-3 minutes)
-6. Go to the **Variables** tab and add:
-   - Key: `SESSION_SECRET`
-   - Value: Generate a random string at https://www.random.org/strings/ (or use: `super-secret-key-change-me-in-production-12345`)
-7. Deploy completes automatically
-8. Your app is live at the URL shown in Railway dashboard (looks like: `https://simofamilytree.up.railway.app`)
+The tree backup in the app includes people, relationships, and photos, but not user
+accounts. To migrate the complete SQLite installation—including account password hashes,
+settings, family relationships, and local photo files—use the migration script.
 
-**Cost**: ~$5-10/month after free credits ($5)
+First obtain the **authoritative** `familytree.db` and its matching `uploads` directory from
+the server that currently holds your data. Do not assume a copy on your computer matches
+the live Render data. Stop writes to the old app during migration and keep an untouched
+backup of both source items.
 
----
+For a local migration, create a `.env` file from `.env.example` and set `DATABASE_URL` to
+the destination Neon connection string. Then run:
 
-### **Option 2: Render.com**
-
-Another great option with similar features to Railway.
-
-1. Go to [https://render.com](https://render.com)
-2. Sign up/Login with GitHub
-3. Click **"New +"** → **"Web Service"**
-4. Connect your **SimoFamilyTree** repository
-5. Fill in details:
-   - **Name**: `simofamilytree` (or your choice)
-   - **Environment**: Node
-   - **Build Command**: `npm install`
-   - **Start Command**: `node server.js`
-6. Scroll down to **Environment** and add:
-   - Key: `SESSION_SECRET`
-   - Value: (generate random string as above)
-7. Add a **persistent disk** to the service with mount path `/var/data`.
-8. Add these environment variables:
-   - `DATA_DIR` = `/var/data`
-   - `UPLOAD_DIR` = `/var/data/uploads`
-9. Click **"Create Web Service"**
-10. Wait 3-5 minutes for deployment
-
-The service's default filesystem is temporary. Without a persistent disk, a restart or
-redeploy can reset the SQLite database and remove accounts, family-tree data, and photos.
-Persistent disks require a Render plan that supports them; the free service is not suitable
-for persistent SQLite storage.
-
-If you already have data on Render, back up `data/familytree.db` and `uploads/` before
-switching to the new disk. A new disk starts empty; restore those files to `/var/data` and
-`/var/data/uploads` before relying on it. The app will create a fresh database if no database
-file exists at the configured path.
-
-**Cost**: Free tier (temporary storage; app sleeps after inactivity) or a paid plan with persistent storage
-
----
-
-### **Option 3: Vercel (Advanced)**
-
-Vercel works but requires a small configuration change.
-
-1. Go to [https://vercel.com](https://vercel.com)
-2. Click **"Add New"** → **"Project"**
-3. Import your GitHub repository
-4. In **Project Settings**:
-   - Framework: **Other**
-   - Build Command: `npm install`
-   - Output Directory: Leave blank
-   - Install Command: `npm install`
-5. Add Environment Variable:
-   - `SESSION_SECRET`: (random string)
-6. Deploy
-
----
-
-### **Option 4: Self-Hosted VPS (Full Control)**
-
-For total control, use a VPS from DigitalOcean, Linode, or similar.
-
-**Setup (Ubuntu/Debian Linux):**
-
-```bash
-# SSH into your server, then run:
-sudo apt update && sudo apt upgrade -y
-
-# Install Node.js 18+
-curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-sudo apt install nodejs -y
-
-# Install Git
-sudo apt install git -y
-
-# Clone your repository
-git clone https://github.com/msimooo/SimoFamilyTree.git
-cd SimoFamilyTree
-
-# Install dependencies
+```powershell
 npm install
-
-# Install PM2 to keep the app running
-sudo npm install -g pm2
-
-# Start the app
-SESSION_SECRET="your-random-secret-here" pm2 start server.js --name family-tree
-
-# Make it restart on reboot
-pm2 startup
-pm2 save
-
-# Optional: Set up a domain with automatic HTTPS using Caddy
-sudo apt install -y debian-keyring debian-archive-keyring apt-transport-https curl
-curl -1sLf 'https://dl.caddy.community/packaging/caddy/debian/pubkey.gpg' | sudo gpg --dearmor -o /usr/share/keyrings/caddy-archive-keyring.gpg
-sudo curl -1sLf 'https://dl.caddy.community/packaging/caddy/debian/sources.list' | sudo tee /etc/apt/sources.list.d/caddy-caddy.list
-sudo apt update && sudo apt install caddy -y
-
-# Create Caddyfile at /etc/caddy/Caddyfile with:
-# yourdomain.com {
-#     reverse_proxy localhost:3000
-# }
-
-sudo systemctl restart caddy
+npm run migrate:sqlite -- "C:\path\to\familytree.db" "C:\path\to\uploads"
 ```
 
-**Cost**: $5-20/month depending on server specs
+The script reads the SQLite database without modifying it, stores photos in PostgreSQL,
+and refuses to overwrite existing people or non-default accounts in Neon. It permits a
+fresh database, including the default `admin` account created at first app startup. If a
+referenced photo file is missing, the migration stops rather than silently dropping it.
+Verify the migrated accounts, people, and photos in the app before changing Render's
+`DATABASE_URL` or directing users to the new deployment.
 
----
+If the old Render SQLite data was on a temporary filesystem and has already disappeared,
+the migration cannot recover it. The JSON tree backup can restore people and photos, but
+accounts must be recreated.
 
-## 📋 Post-Deployment Checklist
+## Local setup
 
-- [ ] App is accessible at your deployed URL
-- [ ] Login works (default: `admin` / `admin123`)
-- [ ] **Change default admin password immediately** (click name → "Change password")
-- [ ] Test adding a family member
-- [ ] Test uploading a photo
-- [ ] Test exporting to PDF/JPG
-- [ ] Set up backups of `data/familytree.db` and `uploads/` directory
+Install dependencies once, create `.env` using `.env.example`, and provide a PostgreSQL
+database URL plus a session secret:
 
----
+```powershell
+npm install
+npm start
+```
 
-## 🔐 Security Reminders
+Then open [http://localhost:3002](http://localhost:3002). `.env` is ignored by Git; never
+commit database credentials or session secrets.
 
-✅ **Already done:**
-- `SESSION_SECRET` set via environment variables (not hardcoded)
-- Passwords hashed with bcryptjs
-- HTTPS recommended in production
+## Backups and security
 
-⚠️ **You should do:**
-- Use HTTPS (Railway, Render do this automatically)
-- Change default admin password on first login
-- Set a strong, random `SESSION_SECRET`
-- Periodically backup `data/` and `uploads/` folders
-
----
-
-## 🐛 Troubleshooting
-
-**App won't start?**
-- Check that `NODE_ENV` is not set to `production` locally
-- Verify `SESSION_SECRET` is set (even with a simple value for testing)
-- Check logs in your deployment platform's dashboard
-
-**Database errors?**
-- `data/familytree.db` is created automatically on first run
-- If corrupted, delete it and restart the app
-
-**Photo uploads not working?**
-- Ensure `uploads/` directory exists and is writable
-- Check file size limits (set to 60MB by default in `server.js`)
-
-**Can't access deployed app?**
-- Wait a few minutes after deploy
-- Check deployment logs in Railway/Render dashboard
-- Verify `SESSION_SECRET` environment variable is set
-
----
-
-## 📞 Need Help?
-
-- Railway docs: https://docs.railway.app
-- Render docs: https://render.com/docs
-- Node.js Express: https://expressjs.com/
-
-Good luck! 🎉
+- Back up the Neon database regularly using Neon or PostgreSQL backup/export tools.
+- The in-app tree backup is useful for moving family-tree records, but it does not include
+  accounts or settings.
+- Keep `DATABASE_URL` and `SESSION_SECRET` private and use HTTPS.
+- Public viewing is disabled by default. Enabling it exposes names, relationships, and
+  photos to anyone with the site URL.

@@ -1,8 +1,10 @@
+require('dotenv').config();
+
 const path = require('path');
 const express = require('express');
 const session = require('express-session');
 
-const { UPLOAD_DIR, isPublicTreeEnabled } = require('./db'); // also runs schema init / admin seed
+const { initializeDatabase } = require('./db');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const peopleRoutes = require('./routes/people');
@@ -28,10 +30,6 @@ app.use(
   })
 );
 
-app.use('/uploads', (req, res, next) => {
-  if ((req.session && req.session.user) || isPublicTreeEnabled()) return next();
-  return res.status(401).json({ error: 'Not authenticated' });
-}, express.static(UPLOAD_DIR));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api/auth', authRoutes);
@@ -51,6 +49,14 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: err.message || 'Something went wrong' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Family Tree app running → http://localhost:${PORT}`);
+async function start() {
+  await initializeDatabase();
+  app.listen(PORT, () => {
+    console.log(`Family Tree app running → http://localhost:${PORT}`);
+  });
+}
+
+start().catch((err) => {
+  console.error('Failed to initialize the database:', err);
+  process.exitCode = 1;
 });
