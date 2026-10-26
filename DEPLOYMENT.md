@@ -45,10 +45,24 @@ Another great option with similar features to Railway.
 6. Scroll down to **Environment** and add:
    - Key: `SESSION_SECRET`
    - Value: (generate random string as above)
-7. Click **"Create Web Service"**
-8. Wait 3-5 minutes for deployment
+7. Add a **persistent disk** to the service with mount path `/var/data`.
+8. Add these environment variables:
+   - `DATA_DIR` = `/var/data`
+   - `UPLOAD_DIR` = `/var/data/uploads`
+9. Click **"Create Web Service"**
+10. Wait 3-5 minutes for deployment
 
-**Cost**: Free tier (app sleeps after 15 min inactivity) or $7/month for always-on
+The service's default filesystem is temporary. Without a persistent disk, a restart or
+redeploy can reset the SQLite database and remove accounts, family-tree data, and photos.
+Persistent disks require a Render plan that supports them; the free service is not suitable
+for persistent SQLite storage.
+
+If you already have data on Render, back up `data/familytree.db` and `uploads/` before
+switching to the new disk. A new disk starts empty; restore those files to `/var/data` and
+`/var/data/uploads` before relying on it. The app will create a fresh database if no database
+file exists at the configured path.
+
+**Cost**: Free tier (temporary storage; app sleeps after inactivity) or a paid plan with persistent storage
 
 ---
 

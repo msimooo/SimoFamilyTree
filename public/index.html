@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,22 +13,23 @@
 <!-- ═══════════ LOGIN ═══════════ -->
 <div id="loginScreen">
   <div class="login-card">
+    <button type="button" class="language-btn login-language-btn" id="loginLanguageBtn" aria-label="Switch language">العربية</button>
     <div class="login-emblem">🌳</div>
     <h1>Rootline</h1>
-    <p class="sub">Sign in to view and manage your family tree</p>
+    <p class="sub" data-i18n="Sign in to view and manage your family tree">Sign in to view and manage your family tree</p>
     <div id="loginError" class="login-error hidden"></div>
     <form id="loginForm">
       <div class="form-row">
-        <label class="field-label">Username</label>
+        <label class="field-label" data-i18n="Username">Username</label>
         <input id="loginUsername" type="text" class="text-field" autocomplete="username" required>
       </div>
       <div class="form-row">
-        <label class="field-label">Password</label>
+        <label class="field-label" data-i18n="Password">Password</label>
         <input id="loginPassword" type="password" class="text-field" autocomplete="current-password" required>
       </div>
-      <button type="submit" class="btn btn-primary btn-block">Sign In</button>
+      <button type="submit" class="btn btn-primary btn-block" data-i18n="Sign In">Sign In</button>
     </form>
-    <p class="login-hint">First time here? Default administrator login:<br><b>admin</b> / <b>admin123</b> — please change this after signing in.</p>
+    <p class="login-hint"><span data-i18n="First time here? Default administrator login:">First time here? Default administrator login:</span><br><b>admin</b> / <b>admin123</b> — <span data-i18n="please change this after signing in.">please change this after signing in.</span></p>
   </div>
 </div>
 
@@ -41,18 +42,19 @@
     </div>
     <div class="topbar-actions">
       <div style="position:relative">
-        <button id="exportBtn" class="btn btn-outline btn-sm">Export ▾</button>
+        <button id="exportBtn" class="btn btn-outline btn-sm" data-i18n="Export ▾">Export ▾</button>
         <div id="exportMenu" class="export-menu hidden">
-          <div class="export-menu-label">Share &amp; print</div>
-          <button type="button" id="exportPdfBtn" class="export-menu-item">📄 Export as PDF</button>
-          <button type="button" id="exportJpgBtn" class="export-menu-item">🖼️ Export as JPG</button>
+          <div class="export-menu-label" data-i18n="Share & print">Share &amp; print</div>
+          <button type="button" id="exportPdfBtn" class="export-menu-item" data-i18n="📄 Export as PDF">📄 Export as PDF</button>
+          <button type="button" id="exportJpgBtn" class="export-menu-item" data-i18n="🖼️ Export as JPG">🖼️ Export as JPG</button>
           <div class="export-menu-divider"></div>
-          <div class="export-menu-label">Backup &amp; transfer</div>
-          <button type="button" id="exportJsonBtn" class="export-menu-item">💾 Save Tree to File</button>
-          <button type="button" id="importJsonBtn" class="export-menu-item">📥 Import Tree from File</button>
+          <div class="export-menu-label" data-i18n="Backup & transfer">Backup &amp; transfer</div>
+          <button type="button" id="exportJsonBtn" class="export-menu-item" data-i18n="💾 Save Tree to File">💾 Save Tree to File</button>
+          <button type="button" id="importJsonBtn" class="export-menu-item" data-i18n="📥 Import Tree from File">📥 Import Tree from File</button>
         </div>
       </div>
-      <button id="manageUsersBtn" class="btn btn-outline btn-sm hidden">Manage Users</button>
+      <button id="manageUsersBtn" class="btn btn-outline btn-sm hidden" data-i18n="Manage Users">Manage Users</button>
+      <button type="button" class="language-btn" id="languageBtn" aria-label="Switch language">العربية</button>
       <div class="user-chip" id="userChip">
         <div class="user-avatar" id="userAvatar">–</div>
         <div>
@@ -68,20 +70,20 @@
     <svg id="treeSvg"><g id="treeRoot"></g></svg>
 
     <div class="tree-controls">
-      <button class="zoom-btn" id="zoomInBtn" title="Zoom in">＋</button>
-      <button class="zoom-btn" id="zoomOutBtn" title="Zoom out">－</button>
-      <button class="zoom-btn" id="zoomResetBtn" title="Reset view">⤢</button>
+      <button class="zoom-btn" id="zoomInBtn" title="Zoom in" data-i18n-title="Zoom in">＋</button>
+      <button class="zoom-btn" id="zoomOutBtn" title="Zoom out" data-i18n-title="Zoom out">－</button>
+      <button class="zoom-btn" id="zoomResetBtn" title="Reset view" data-i18n-title="Reset view">⤢</button>
     </div>
 
     <button class="fab-add-ancestor" id="addAncestorBtn">
-      <span style="font-size:16px;line-height:1">＋</span> Add Ancestor
+      <span style="font-size:16px;line-height:1">＋</span> <span data-i18n="Add Ancestor">Add Ancestor</span>
     </button>
 
     <div class="empty-tree hidden" id="emptyTree">
       <div class="e-icon">🌱</div>
-      <h2>Your tree is empty</h2>
-      <p>Every family tree starts with its first ancestor. Add one to begin — you can branch out sons, daughters, and further generations from there.</p>
-      <button class="btn btn-primary" id="emptyAddAncestorBtn">＋ Add First Ancestor</button>
+      <h2 data-i18n="Your tree is empty">Your tree is empty</h2>
+      <p data-i18n="Every family tree starts with its first ancestor. Add one to begin — you can branch out sons, daughters, and further generations from there.">Every family tree starts with its first ancestor. Add one to begin — you can branch out sons, daughters, and further generations from there.</p>
+      <button class="btn btn-primary" id="emptyAddAncestorBtn"><span aria-hidden="true">＋ </span><span data-i18n="Add First Ancestor">Add First Ancestor</span></button>
     </div>
   </div>
 </div>
@@ -90,7 +92,7 @@
 <div class="overlay" id="personPanelOverlay"></div>
 <aside class="side-panel" id="personPanel">
   <div class="panel-head">
-    <h2>Person</h2>
+    <h2 data-i18n="Person">Person</h2>
     <button class="panel-close" id="personPanelClose">✕</button>
   </div>
   <div class="panel-body">
@@ -98,77 +100,77 @@
       <div class="detail-photo" id="detailPhotoWrap"><span class="person-initial">?</span></div>
       <div class="detail-photo-actions">
         <button class="btn btn-outline btn-sm file-btn">
-          Change Photo
+          <span data-i18n="Change Photo">Change Photo</span>
           <input type="file" id="detailPhotoInput" accept="image/*">
         </button>
-        <button class="btn btn-ghost btn-sm" id="detailRemovePhotoBtn">Remove Photo</button>
+        <button class="btn btn-ghost btn-sm" id="detailRemovePhotoBtn" data-i18n="Remove Photo">Remove Photo</button>
       </div>
     </div>
 
     <div class="form-row">
-      <label class="field-label">First Name</label>
+      <label class="field-label" data-i18n="First Name">First Name</label>
       <input id="detailName" type="text" class="text-field">
     </div>
 
     <div class="form-row">
-      <label class="field-label">Gender</label>
+      <label class="field-label" data-i18n="Gender">Gender</label>
       <div class="pill-group">
-        <button type="button" class="pill-opt" data-gender="male" id="detailGenderMale">Male</button>
-        <button type="button" class="pill-opt" data-gender="female" id="detailGenderFemale">Female</button>
+        <button type="button" class="pill-opt" data-gender="male" id="detailGenderMale" data-i18n="Male">Male</button>
+        <button type="button" class="pill-opt" data-gender="female" id="detailGenderFemale" data-i18n="Female">Female</button>
       </div>
     </div>
 
     <div class="meta-line" id="detailFatherLine"></div>
     <div class="meta-line" id="detailChildrenLine"></div>
 
-    <div class="section-label">Add a relative</div>
+    <div class="section-label" data-i18n="Add a relative">Add a relative</div>
     <div class="relation-grid">
-      <button class="relation-btn" id="addSonBtn"><span class="r-icon">👦</span>Add Son</button>
-      <button class="relation-btn" id="addDaughterBtn"><span class="r-icon">👧</span>Add Daughter</button>
-      <button class="relation-btn" id="addFatherBtn" style="grid-column:1 / -1"><span class="r-icon">⬆️</span>Add Father (extend upward)</button>
+      <button class="relation-btn" id="addSonBtn"><span class="r-icon">👦</span><span data-i18n="Add Son">Add Son</span></button>
+      <button class="relation-btn" id="addDaughterBtn"><span class="r-icon">👧</span><span data-i18n="Add Daughter">Add Daughter</span></button>
+      <button class="relation-btn" id="addFatherBtn" style="grid-column:1 / -1"><span class="r-icon">⬆️</span><span data-i18n="Add Father (extend upward)">Add Father (extend upward)</span></button>
     </div>
   </div>
   <div class="panel-footer">
-    <button class="btn btn-danger-outline" id="detailDeleteBtn">Delete</button>
-    <button class="btn btn-primary" id="detailSaveBtn" style="margin-left:auto">Save Changes</button>
+    <button class="btn btn-danger-outline" id="detailDeleteBtn" data-i18n="Delete">Delete</button>
+    <button class="btn btn-primary" id="detailSaveBtn" style="margin-left:auto" data-i18n="Save Changes">Save Changes</button>
   </div>
 </aside>
 
 <!-- ═══════════ NEW RELATIVE MODAL ═══════════ -->
 <div class="overlay" id="relFormOverlay"></div>
 <div class="modal-box" id="relFormModal">
-  <h3 id="relFormTitle">Add Person</h3>
-  <p class="sub" id="relFormSub">Fill in their details below.</p>
+  <h3 id="relFormTitle" data-i18n="Add Person">Add Person</h3>
+  <p class="sub" id="relFormSub" data-i18n="Fill in their details below.">Fill in their details below.</p>
 
   <div class="form-row">
-    <label class="field-label">First Name</label>
-    <input id="relFormName" type="text" class="text-field" placeholder="e.g. Elena">
+    <label class="field-label" data-i18n="First Name">First Name</label>
+    <input id="relFormName" type="text" class="text-field" placeholder="e.g. Elena" data-i18n-placeholder="e.g. Elena">
   </div>
 
   <div class="form-row">
-    <label class="field-label">Gender</label>
+    <label class="field-label" data-i18n="Gender">Gender</label>
     <div class="pill-group">
-      <button type="button" class="pill-opt" data-gender="male" id="relGenderMale">Male</button>
-      <button type="button" class="pill-opt" data-gender="female" id="relGenderFemale">Female</button>
+      <button type="button" class="pill-opt" data-gender="male" id="relGenderMale" data-i18n="Male">Male</button>
+      <button type="button" class="pill-opt" data-gender="female" id="relGenderFemale" data-i18n="Female">Female</button>
     </div>
   </div>
 
   <div class="form-row">
-    <label class="field-label">Photo (optional)</label>
+    <label class="field-label" data-i18n="Photo (optional)">Photo (optional)</label>
     <div class="photo-drop" id="relPhotoDrop">
       <img id="relPhotoPreview" class="photo-drop-preview hidden">
       <span id="relPhotoIcon" style="font-size:22px">🖼️</span>
       <div>
-        <div class="photo-drop-text">Click to upload a photo</div>
-        <div class="photo-drop-sub">PNG, JPG, or WEBP — up to 5MB</div>
+        <div class="photo-drop-text" data-i18n="Click to upload a photo">Click to upload a photo</div>
+        <div class="photo-drop-sub" data-i18n="PNG, JPG, or WEBP — up to 5MB">PNG, JPG, or WEBP — up to 5MB</div>
       </div>
       <input type="file" id="relPhotoInput" accept="image/*">
     </div>
   </div>
 
   <div class="form-row" style="display:flex;gap:10px;margin-top:22px">
-    <button class="btn btn-outline" id="relFormCancel" style="flex:1">Cancel</button>
-    <button class="btn btn-primary" id="relFormSave" style="flex:1">Save</button>
+    <button class="btn btn-outline" id="relFormCancel" style="flex:1" data-i18n="Cancel">Cancel</button>
+    <button class="btn btn-primary" id="relFormSave" style="flex:1" data-i18n="Save">Save</button>
   </div>
 </div>
 
@@ -176,66 +178,66 @@
 <div class="overlay" id="adminPanelOverlay"></div>
 <aside class="side-panel" id="adminPanel" style="width:480px">
   <div class="panel-head">
-    <h2>Manage Users</h2>
+    <h2 data-i18n="Manage Users">Manage Users</h2>
     <button class="panel-close" id="adminPanelClose">✕</button>
   </div>
   <div class="panel-body">
-    <div class="section-label">Team</div>
+    <div class="section-label" data-i18n="Team">Team</div>
     <table class="admin-table">
-      <thead><tr><th>Name</th><th>Role</th><th></th></tr></thead>
+      <thead><tr><th data-i18n="Name">Name</th><th data-i18n="Role">Role</th><th></th></tr></thead>
       <tbody id="usersTableBody"></tbody>
     </table>
 
-    <div class="section-label">Add a user</div>
+    <div class="section-label" data-i18n="Add a user">Add a user</div>
     <div class="form-row">
-      <label class="field-label">Display Name</label>
-      <input id="newUserDisplayName" type="text" class="text-field" placeholder="e.g. Maria Gomez">
+      <label class="field-label" data-i18n="Display Name">Display Name</label>
+      <input id="newUserDisplayName" type="text" class="text-field" placeholder="e.g. Maria Gomez" data-i18n-placeholder="e.g. Maria Gomez">
     </div>
     <div class="form-row">
-      <label class="field-label">Username</label>
-      <input id="newUserUsername" type="text" class="text-field" placeholder="e.g. mgomez">
+      <label class="field-label" data-i18n="Username">Username</label>
+      <input id="newUserUsername" type="text" class="text-field" placeholder="e.g. mgomez" data-i18n-placeholder="e.g. mgomez">
     </div>
     <div class="form-row">
-      <label class="field-label">Password</label>
-      <input id="newUserPassword" type="password" class="text-field" placeholder="At least 6 characters">
+      <label class="field-label" data-i18n="Password">Password</label>
+      <input id="newUserPassword" type="password" class="text-field" placeholder="At least 6 characters" data-i18n-placeholder="At least 6 characters">
     </div>
     <div class="form-row">
-      <label class="field-label">Role</label>
+      <label class="field-label" data-i18n="Role">Role</label>
       <div class="pill-group">
-        <button type="button" class="pill-opt" data-role="assistant" id="roleAssistantBtn">Assistant</button>
-        <button type="button" class="pill-opt" data-role="admin" id="roleAdminBtn">Administrator</button>
+        <button type="button" class="pill-opt" data-role="assistant" id="roleAssistantBtn" data-i18n="Assistant">Assistant</button>
+        <button type="button" class="pill-opt" data-role="admin" id="roleAdminBtn" data-i18n="Administrator">Administrator</button>
       </div>
     </div>
-    <button class="btn btn-primary btn-block" id="createUserBtn">＋ Create User</button>
+    <button class="btn btn-primary btn-block" id="createUserBtn"><span aria-hidden="true">＋ </span><span data-i18n="Create User">Create User</span></button>
   </div>
 </aside>
 
 <!-- ═══════════ ACCOUNT MENU (self password change) ═══════════ -->
 <div class="overlay" id="accountOverlay"></div>
 <div class="modal-box" id="accountModal">
-  <h3>Your Account</h3>
+  <h3 data-i18n="Your Account">Your Account</h3>
   <p class="sub" id="accountSub"></p>
-  <div class="section-label" style="margin-top:4px">Change password</div>
+  <div class="section-label" style="margin-top:4px" data-i18n="Change password">Change password</div>
   <div class="form-row">
-    <label class="field-label">Current Password</label>
+    <label class="field-label" data-i18n="Current Password">Current Password</label>
     <input id="curPasswordInput" type="password" class="text-field">
   </div>
   <div class="form-row">
-    <label class="field-label">New Password</label>
-    <input id="newPasswordInput" type="password" class="text-field" placeholder="At least 6 characters">
+    <label class="field-label" data-i18n="New Password">New Password</label>
+    <input id="newPasswordInput" type="password" class="text-field" placeholder="At least 6 characters" data-i18n-placeholder="At least 6 characters">
   </div>
-  <button class="btn btn-primary btn-block" id="changePasswordBtn">Update Password</button>
-  <button class="btn btn-outline btn-block" id="logoutBtn" style="margin-top:10px">Log Out</button>
+  <button class="btn btn-primary btn-block" id="changePasswordBtn" data-i18n="Update Password">Update Password</button>
+  <button class="btn btn-outline btn-block" id="logoutBtn" style="margin-top:10px" data-i18n="Log Out">Log Out</button>
 </div>
 
 <!-- ═══════════ CONFIRM DIALOG ═══════════ -->
 <div class="overlay" id="confirmOverlay"></div>
 <div class="modal-box confirm-box" id="confirmModal">
-  <h3 id="confirmTitle">Are you sure?</h3>
+  <h3 id="confirmTitle" data-i18n="Are you sure?">Are you sure?</h3>
   <p class="sub" id="confirmMessage"></p>
   <div class="confirm-actions">
-    <button class="btn btn-outline" id="confirmCancelBtn">Cancel</button>
-    <button class="btn btn-danger-outline" id="confirmOkBtn">Confirm</button>
+    <button class="btn btn-outline" id="confirmCancelBtn" data-i18n="Cancel">Cancel</button>
+    <button class="btn btn-danger-outline" id="confirmOkBtn" data-i18n="Confirm">Confirm</button>
   </div>
 </div>
 

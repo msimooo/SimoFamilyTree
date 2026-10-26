@@ -9,6 +9,212 @@ const state = {
   users: [],
 };
 
+const arabicTranslations = {
+  'Sign in to view and manage your family tree': 'سجّل الدخول لعرض شجرة عائلتك وإدارتها',
+  'Username': 'اسم المستخدم',
+  'Password': 'كلمة المرور',
+  'Sign In': 'تسجيل الدخول',
+  'First time here? Default administrator login:': 'أول مرة هنا؟ بيانات دخول المسؤول الافتراضية:',
+  'please change this after signing in.': 'يرجى تغييرها بعد تسجيل الدخول.',
+  'Export ▾': 'تصدير ▾',
+  'Share & print': 'المشاركة والطباعة',
+  '📄 Export as PDF': '📄 تصدير بصيغة PDF',
+  '🖼️ Export as JPG': '🖼️ تصدير بصيغة JPG',
+  'Backup & transfer': 'النسخ الاحتياطي والنقل',
+  '💾 Save Tree to File': '💾 حفظ الشجرة في ملف',
+  '📥 Import Tree from File': '📥 استيراد شجرة من ملف',
+  'Manage Users': 'إدارة المستخدمين',
+  'Zoom in': 'تكبير',
+  'Zoom out': 'تصغير',
+  'Reset view': 'إعادة ضبط العرض',
+  'Add Ancestor': 'إضافة أحد الأجداد',
+  'Your tree is empty': 'شجرتك فارغة',
+  'Every family tree starts with its first ancestor. Add one to begin — you can branch out sons, daughters, and further generations from there.': 'تبدأ كل شجرة عائلة بأحد الأجداد. أضف أول شخص للبدء، ثم أضف الأبناء والأجيال التالية.',
+  'Add First Ancestor': 'إضافة أول الأجداد',
+  'Person': 'الشخص',
+  'Add Person': 'إضافة شخص',
+  'Change Photo': 'تغيير الصورة',
+  'Remove Photo': 'إزالة الصورة',
+  'First Name': 'الاسم الأول',
+  'Gender': 'الجنس',
+  'Male': 'ذكر',
+  'Female': 'أنثى',
+  'Add a relative': 'إضافة قريب',
+  'Add Son': 'إضافة ابن',
+  'Add Daughter': 'إضافة ابنة',
+  'Add Father': 'إضافة الأب',
+  'Add Father (extend upward)': 'إضافة الأب (للتوسع للأعلى)',
+  'Delete': 'حذف',
+  'Save Changes': 'حفظ التغييرات',
+  'Fill in their details below.': 'أدخل تفاصيله أدناه.',
+  'e.g. Elena': 'مثال: ليلى',
+  'Photo (optional)': 'الصورة (اختياري)',
+  'Click to upload a photo': 'انقر لرفع صورة',
+  'PNG, JPG, or WEBP — up to 5MB': 'PNG أو JPG أو WEBP — حتى 5 ميغابايت',
+  'Cancel': 'إلغاء',
+  'Save': 'حفظ',
+  'Team': 'الفريق',
+  'Name': 'الاسم',
+  'Role': 'الدور',
+  'Add a user': 'إضافة مستخدم',
+  'Display Name': 'الاسم المعروض',
+  'e.g. Maria Gomez': 'مثال: سارة أحمد',
+  'e.g. mgomez': 'مثال: sahmed',
+  'At least 6 characters': '6 أحرف على الأقل',
+  'Assistant': 'مساعد',
+  'Administrator': 'مسؤول',
+  'Create User': 'إنشاء مستخدم',
+  'Your Account': 'حسابك',
+  'Change password': 'تغيير كلمة المرور',
+  'Current Password': 'كلمة المرور الحالية',
+  'New Password': 'كلمة المرور الجديدة',
+  'Update Password': 'تحديث كلمة المرور',
+  'Log Out': 'تسجيل الخروج',
+  'Are you sure?': 'هل أنت متأكد؟',
+  'Confirm': 'تأكيد',
+  'Request failed': 'تعذر إكمال الطلب',
+  'Invalid username or password': 'اسم المستخدم أو كلمة المرور غير صحيحين',
+  'Username and password are required': 'اسم المستخدم وكلمة المرور مطلوبان',
+  'Current and new password are required': 'كلمتا المرور الحالية والجديدة مطلوبتان',
+  'New password must be at least 6 characters': 'يجب ألا تقل كلمة المرور الجديدة عن 6 أحرف',
+  'Current password is incorrect': 'كلمة المرور الحالية غير صحيحة',
+  'Username, password, and display name are required': 'اسم المستخدم وكلمة المرور والاسم المعروض مطلوبة',
+  'Password must be at least 6 characters': 'يجب ألا تقل كلمة المرور عن 6 أحرف',
+  "Role must be 'admin' or 'assistant'": 'يجب أن يكون الدور مسؤولًا أو مساعدًا',
+  'That username is already taken': 'اسم المستخدم مستخدم بالفعل',
+  'User not found': 'لم يتم العثور على المستخدم',
+  'Cannot demote the last remaining administrator': 'لا يمكن تخفيض صلاحية آخر مسؤول متبقٍ',
+  "You can't delete your own account while logged in": 'لا يمكنك حذف حسابك أثناء تسجيل الدخول',
+  'Cannot delete the last remaining administrator': 'لا يمكن حذف آخر مسؤول متبقٍ',
+  'This file is not a valid Rootline backup': 'هذا الملف ليس نسخة احتياطية صالحة من Rootline',
+  'Backup file contains invalid person records': 'تحتوي النسخة الاحتياطية على بيانات أشخاص غير صالحة',
+  'First name is required': 'الاسم الأول مطلوب',
+  'Gender must be male or female': 'يجب تحديد الجنس ذكرًا أو أنثى',
+  'Lineage must be root, father, son, or daughter': 'يجب أن تكون صلة القرابة أصلًا أو أبًا أو ابنًا أو ابنة',
+  'Relative not found': 'لم يتم العثور على القريب',
+  'This person already has a father recorded in the tree': 'تم تسجيل أب لهذا الشخص بالفعل في الشجرة',
+  'Person not found': 'لم يتم العثور على الشخص',
+  'Fill in both password fields': 'يرجى إدخال كلمتي المرور',
+  'Password updated': 'تم تحديث كلمة المرور',
+  'Saved': 'تم الحفظ',
+  'Photo updated': 'تم تحديث الصورة',
+  'Photo removed': 'تمت إزالة الصورة',
+  'Person deleted': 'تم حذف الشخص',
+  'Branch deleted': 'تم حذف الفرع',
+  'Role updated': 'تم تحديث الدور',
+  'User removed': 'تمت إزالة المستخدم',
+  'Fill in all fields': 'يرجى ملء جميع الحقول',
+  'User created': 'تم إنشاء المستخدم',
+  'Add at least one person before exporting': 'أضف شخصًا واحدًا على الأقل قبل التصدير',
+  'Preparing image…': 'جارٍ تجهيز الصورة…',
+  'Downloaded family-tree.jpg': 'تم تنزيل family-tree.jpg',
+  'Export failed': 'فشل التصدير',
+  'Preparing PDF…': 'جارٍ تجهيز ملف PDF…',
+  'Downloaded family-tree.pdf': 'تم تنزيل family-tree.pdf',
+  'Add at least one person before saving a backup': 'أضف شخصًا واحدًا على الأقل قبل حفظ نسخة احتياطية',
+  'Preparing backup file…': 'جارٍ تجهيز ملف النسخة الاحتياطية…',
+  'Downloaded family-tree-backup.json': 'تم تنزيل family-tree-backup.json',
+  'Could not create the backup file': 'تعذر إنشاء ملف النسخة الاحتياطية',
+  'photo fetch failed': 'تعذر تحميل الصورة',
+  'Your browser blocked rendering the tree image (canvas security restriction)': 'منع المتصفح إنشاء صورة الشجرة بسبب قيود الأمان',
+  'Could not render the tree image': 'تعذر إنشاء صورة الشجرة',
+  'Only an administrator can import a backup': 'يمكن للمسؤول فقط استيراد نسخة احتياطية',
+  'That file is not valid JSON': 'الملف ليس بتنسيق JSON صالح',
+  'Tree imported successfully': 'تم استيراد الشجرة بنجاح',
+  'This cannot be undone.': 'لا يمكن التراجع عن هذا الإجراء.',
+  'Delete Branch': 'حذف الفرع',
+  'Delete entire branch?': 'هل تريد حذف الفرع بالكامل؟',
+  ' Deleting the branch will permanently remove all of them.': ' سيؤدي حذف الفرع إلى إزالة جميع أفراده نهائيًا.',
+  'Replace your current tree?': 'هل تريد استبدال شجرتك الحالية؟',
+  'Remove this user?': 'هل تريد إزالة هذا المستخدم؟',
+  'They will lose access immediately.': 'سيفقد المستخدم إمكانية الوصول فورًا.',
+  'Remove': 'إزالة',
+  'Importing this backup will permanently replace everyone currently in your tree with the people in this file. This cannot be undone.': 'سيؤدي استيراد هذه النسخة الاحتياطية إلى استبدال جميع الأشخاص في شجرتك نهائيًا بالأشخاص الموجودين في هذا الملف. لا يمكن التراجع عن ذلك.',
+  'Import & Replace': 'استيراد واستبدال',
+  'Add a First Ancestor': 'إضافة أول الأجداد',
+  'They will become the root of a new family line.': 'سيصبح هذا الشخص أصل فرع عائلي جديد.',
+  'This will extend the tree upward from the selected person.': 'سيضيف هذا الشخص جيلًا أعلى من الشخص المحدد.',
+  'This will add a new child under the selected person.': 'سيضيف هذا طفلًا جديدًا للشخص المحدد.',
+  'Father:': 'الأب:',
+  'No father recorded — this person is a first ancestor.': 'لم يتم تسجيل الأب — هذا الشخص هو أحد الأجداد.',
+  'Children:': 'الأبناء:',
+  'No children recorded yet.': 'لم يتم تسجيل أبناء بعد.',
+  'This person already has a father recorded': 'تم تسجيل أب لهذا الشخص بالفعل',
+  'you': 'أنت',
+  'Make Assistant': 'تعيين كمساعد',
+  'Make Admin': 'تعيين كمسؤول',
+  'Family Tree': 'شجرة العائلة',
+  'Generated': 'تاريخ الإنشاء',
+  'added to the tree': 'تمت إضافته إلى الشجرة',
+};
+
+let currentLanguage = localStorage.getItem('rootline-language') === 'ar' ? 'ar' : 'en';
+
+function t(text) {
+  return currentLanguage === 'ar' ? (arabicTranslations[text] || text) : text;
+}
+
+function applyLanguage() {
+  document.documentElement.lang = currentLanguage;
+  document.documentElement.dir = currentLanguage === 'ar' ? 'rtl' : 'ltr';
+  document.title = currentLanguage === 'ar' ? 'Rootline — شجرة العائلة' : 'Rootline — Family Tree';
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    el.textContent = t(el.dataset.i18n);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => {
+    el.placeholder = t(el.dataset.i18nPlaceholder);
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach((el) => {
+    el.title = t(el.dataset.i18nTitle);
+  });
+  if (!$('loginError').classList.contains('hidden') && $('loginError').dataset.message) {
+    $('loginError').textContent = translateMessage($('loginError').dataset.message);
+  }
+  const toggleLabel = currentLanguage === 'ar' ? 'English' : 'العربية';
+  ['languageBtn', 'loginLanguageBtn'].forEach((id) => {
+    if ($(id)) {
+      $(id).textContent = toggleLabel;
+      $(id).setAttribute('aria-label', currentLanguage === 'ar' ? 'تغيير اللغة' : 'Change language');
+    }
+  });
+  if (state.user) {
+    $('userChipRole').textContent = roleLabel(state.user.role);
+    if ($('accountModal').classList.contains('open')) {
+      $('accountSub').textContent = state.user.display_name + ' · ' + roleLabel(state.user.role);
+    }
+  }
+  if (currentPersonId) {
+    const person = findPerson(currentPersonId);
+    updatePersonMetadata(person);
+    if (person) $('personPanel').querySelector('h2').textContent = person.first_name;
+  }
+  if (relFormRelation) updateRelFormLabels();
+  if (state.user && state.user.role === 'admin') renderUsersTable();
+}
+
+function roleLabel(role) {
+  return t(role === 'admin' ? 'Administrator' : 'Assistant');
+}
+
+function localizedError(err) {
+  return err && err.message ? translateMessage(err.message) : t('Request failed');
+}
+
+function translateMessage(message) {
+  if (currentLanguage !== 'ar') return message;
+  const descendantMessage = /^(.+) has (\d+) direct descendant\(s\)\. Delete them first, or confirm a cascade delete of the whole branch\.$/.exec(message);
+  if (descendantMessage) {
+    return descendantMessage[1] + ' لديه ' + descendantMessage[2] + ' من الأبناء المباشرين. احذفهم أولًا، أو أكّد حذف الفرع بالكامل.';
+  }
+  return t(message);
+}
+
+function toggleLanguage() {
+  currentLanguage = currentLanguage === 'ar' ? 'en' : 'ar';
+  localStorage.setItem('rootline-language', currentLanguage);
+  applyLanguage();
+}
+
 let zoomBehavior = null;
 let currentTreeNodes = [];
 let currentTreeLinks = [];
@@ -112,7 +318,7 @@ async function enterApp() {
   $('loginScreen').classList.add('hidden');
   $('app').classList.remove('hidden');
   $('userChipName').textContent = state.user.display_name;
-  $('userChipRole').textContent = state.user.role;
+  $('userChipRole').textContent = roleLabel(state.user.role);
   $('userAvatar').textContent = initialsOf(state.user.display_name);
   $('manageUsersBtn').classList.toggle('hidden', state.user.role !== 'admin');
   $('importJsonBtn').classList.toggle('hidden', state.user.role !== 'admin');
@@ -131,7 +337,8 @@ $('loginForm').addEventListener('submit', async (e) => {
     $('loginPassword').value = '';
     await enterApp();
   } catch (err) {
-    $('loginError').textContent = err.message || 'Invalid username or password';
+    $('loginError').dataset.message = err.message || 'Invalid username or password';
+    $('loginError').textContent = localizedError(err);
     $('loginError').classList.remove('hidden');
   }
 });
@@ -144,7 +351,7 @@ $('logoutBtn').addEventListener('click', async () => {
 });
 
 $('userChip').addEventListener('click', () => {
-  $('accountSub').textContent = state.user.display_name + ' · ' + state.user.role;
+  $('accountSub').textContent = state.user.display_name + ' · ' + roleLabel(state.user.role);
   $('curPasswordInput').value = '';
   $('newPasswordInput').value = '';
   showOverlay('accountOverlay', 'accountModal');
@@ -160,7 +367,7 @@ $('changePasswordBtn').addEventListener('click', async () => {
     toast('Password updated', 'success');
     hideOverlay('accountOverlay', 'accountModal');
   } catch (err) {
-    toast(err.message, 'danger');
+    toast(localizedError(err), 'danger');
   }
 });
 
@@ -221,8 +428,7 @@ function personNodeHTML(p) {
     : '<span class="person-initial">' + escapeHtml(initialsOf(p.first_name)) + '</span>';
   return (
     '<div class="person-photo-wrap">' + photo + '</div>' +
-    '<div class="person-name">' + escapeHtml(p.first_name) + '</div>' +
-    '<div class="person-gender-tag">' + escapeHtml(p.gender) + '</div>'
+    '<div class="person-name">' + escapeHtml(p.first_name) + '</div>'
   );
 }
 
@@ -308,21 +514,25 @@ function openPersonPanel(id) {
   updateDetailPhoto(p);
   updateDetailGenderPills();
 
-  const father = p.father_id ? findPerson(p.father_id) : null;
-  $('detailFatherLine').innerHTML = father
-    ? 'Father: <b>' + escapeHtml(father.first_name) + '</b>'
-    : 'No father recorded — this person is a first ancestor.';
-  const kids = childrenOf(p.id);
-  $('detailChildrenLine').innerHTML = kids.length
-    ? 'Children: <b>' + kids.map((k) => escapeHtml(k.first_name)).join(', ') + '</b>'
-    : 'No children recorded yet.';
-
-  $('addFatherBtn').disabled = !!p.father_id;
-  $('addFatherBtn').title = p.father_id ? 'This person already has a father recorded' : '';
+  updatePersonMetadata(p);
 
   $('personPanel').querySelector('h2').textContent = p.first_name;
   showOverlay('personPanelOverlay', 'personPanel');
   $('personPanel').classList.add('open');
+}
+function updatePersonMetadata(p) {
+  if (!p) return;
+  const father = p.father_id ? findPerson(p.father_id) : null;
+  $('detailFatherLine').innerHTML = father
+    ? t('Father:') + ' <b>' + escapeHtml(father.first_name) + '</b>'
+    : t('No father recorded — this person is a first ancestor.');
+  const kids = childrenOf(p.id);
+  $('detailChildrenLine').innerHTML = kids.length
+    ? t('Children:') + ' <b>' + kids.map((k) => escapeHtml(k.first_name)).join(', ') + '</b>'
+    : t('No children recorded yet.');
+
+  $('addFatherBtn').disabled = !!p.father_id;
+  $('addFatherBtn').title = p.father_id ? t('This person already has a father recorded') : '';
 }
 function closePersonPanel() {
   hideOverlay('personPanelOverlay', 'personPanel');
@@ -357,7 +567,7 @@ $('detailSaveBtn').addEventListener('click', async () => {
     const p = findPerson(currentPersonId);
     if (p) { $('personPanel').querySelector('h2').textContent = p.first_name; updateDetailPhoto(p); }
   } catch (err) {
-    toast(err.message, 'danger');
+    toast(localizedError(err), 'danger');
   }
 });
 
@@ -372,7 +582,7 @@ $('detailPhotoInput').addEventListener('change', async (e) => {
     await fetchPeople();
     updateDetailPhoto(data.person);
   } catch (err) {
-    toast(err.message, 'danger');
+    toast(localizedError(err), 'danger');
   }
   e.target.value = '';
 });
@@ -386,14 +596,14 @@ $('detailRemovePhotoBtn').addEventListener('click', async () => {
     const p = findPerson(currentPersonId);
     if (p) updateDetailPhoto(p);
   } catch (err) {
-    toast(err.message, 'danger');
+    toast(localizedError(err), 'danger');
   }
 });
 
 $('detailDeleteBtn').addEventListener('click', async () => {
   if (!currentPersonId) return;
   const p = findPerson(currentPersonId);
-  const ok = await confirmDialog('Delete ' + p.first_name + '?', 'This cannot be undone.', 'Delete');
+  const ok = await confirmDialog(t('Delete') + ' ' + p.first_name + '?', t('This cannot be undone.'), t('Delete'));
   if (!ok) return;
   try {
     await api('/people/' + currentPersonId, { method: 'DELETE' });
@@ -404,8 +614,8 @@ $('detailDeleteBtn').addEventListener('click', async () => {
     if (err.status === 409 && err.data && err.data.error === 'has_children') {
       const cascade = await confirmDialog(
         'Delete entire branch?',
-        err.data.message + ' Deleting the branch will permanently remove all of them.',
-        'Delete Branch'
+        translateMessage(err.data.message) + t(' Deleting the branch will permanently remove all of them.'),
+        t('Delete Branch')
       );
       if (!cascade) return;
       try {
@@ -414,10 +624,10 @@ $('detailDeleteBtn').addEventListener('click', async () => {
         closePersonPanel();
         await fetchPeople();
       } catch (err2) {
-        toast(err2.message, 'danger');
+        toast(localizedError(err2), 'danger');
       }
     } else {
-      toast(err.message, 'danger');
+      toast(localizedError(err), 'danger');
     }
   }
 });
@@ -441,18 +651,22 @@ function openRelForm(relation, relativeId) {
   $('relPhotoIcon').classList.remove('hidden');
   $('relPhotoInput').value = '';
 
+  updateRelFormLabels();
+
+  updateRelGenderPills();
+  showOverlay('relFormOverlay', 'relFormModal');
+  setTimeout(() => $('relFormName').focus(), 120);
+}
+function updateRelFormLabels() {
   const titles = {
     root: ['Add a First Ancestor', 'They will become the root of a new family line.'],
     father: ['Add Father', 'This will extend the tree upward from the selected person.'],
     son: ['Add Son', 'This will add a new child under the selected person.'],
     daughter: ['Add Daughter', 'This will add a new child under the selected person.'],
   };
-  $('relFormTitle').textContent = titles[relation][0];
-  $('relFormSub').textContent = titles[relation][1];
-
-  updateRelGenderPills();
-  showOverlay('relFormOverlay', 'relFormModal');
-  setTimeout(() => $('relFormName').focus(), 120);
+  if (!relFormRelation) return;
+  $('relFormTitle').textContent = t(titles[relFormRelation][0]);
+  $('relFormSub').textContent = t(titles[relFormRelation][1]);
 }
 function closeRelForm() {
   hideOverlay('relFormOverlay', 'relFormModal');
@@ -493,7 +707,7 @@ $('relFormSave').addEventListener('click', async () => {
 
   try {
     await apiForm('/people', 'POST', fd);
-    toast(first_name + ' added', 'success');
+    toast(first_name + ' ' + t('added to the tree'), 'success');
     closeRelForm();
     await fetchPeople();
     if (relFormRelation !== 'root' && relFormRelativeId) {
@@ -501,7 +715,7 @@ $('relFormSave').addEventListener('click', async () => {
       if (currentPersonId === Number(relFormRelativeId)) openPersonPanel(relFormRelativeId);
     }
   } catch (err) {
-    toast(err.message, 'danger');
+    toast(localizedError(err), 'danger');
   }
 });
 
@@ -534,14 +748,14 @@ function renderUsersTable() {
     const isSelf = state.user && u.id === state.user.id;
     return (
       '<tr>' +
-        '<td>' + escapeHtml(u.display_name) + (isSelf ? ' <span style="color:var(--ink-3);font-size:11px">(you)</span>' : '') +
+        '<td>' + escapeHtml(u.display_name) + (isSelf ? ' <span style="color:var(--ink-3);font-size:11px">(' + t('you') + ')</span>' : '') +
           '<div style="color:var(--ink-3);font-size:11px">@' + escapeHtml(u.username) + '</div></td>' +
-        '<td><span class="role-badge ' + u.role + '">' + u.role + '</span></td>' +
+        '<td><span class="role-badge ' + u.role + '">' + roleLabel(u.role) + '</span></td>' +
         '<td style="text-align:right;white-space:nowrap">' +
           '<button class="btn btn-ghost btn-sm" onclick="toggleUserRole(' + u.id + ',\'' + u.role + '\')">' +
-            (u.role === 'admin' ? 'Make Assistant' : 'Make Admin') +
+            t(u.role === 'admin' ? 'Make Assistant' : 'Make Admin') +
           '</button> ' +
-          (isSelf ? '' : '<button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteUser(' + u.id + ')">Delete</button>') +
+          (isSelf ? '' : '<button class="btn btn-ghost btn-sm" style="color:var(--danger)" onclick="deleteUser(' + u.id + ')">' + t('Delete') + '</button>') +
         '</td>' +
       '</tr>'
     );
@@ -555,18 +769,18 @@ async function toggleUserRole(id, currentRole) {
     toast('Role updated', 'success');
     await fetchUsers();
   } catch (err) {
-    toast(err.message, 'danger');
+    toast(localizedError(err), 'danger');
   }
 }
 async function deleteUser(id) {
-  const ok = await confirmDialog('Remove this user?', 'They will lose access immediately.', 'Remove');
+  const ok = await confirmDialog(t('Remove this user?'), t('They will lose access immediately.'), t('Remove'));
   if (!ok) return;
   try {
     await api('/users/' + id, { method: 'DELETE' });
     toast('User removed', 'success');
     await fetchUsers();
   } catch (err) {
-    toast(err.message, 'danger');
+    toast(localizedError(err), 'danger');
   }
 }
 window.toggleUserRole = toggleUserRole;
@@ -593,7 +807,7 @@ $('createUserBtn').addEventListener('click', async () => {
     $('newUserPassword').value = '';
     await fetchUsers();
   } catch (err) {
-    toast(err.message, 'danger');
+    toast(localizedError(err), 'danger');
   }
 });
 
@@ -639,7 +853,7 @@ function personNodeSVG(d, photoMap, x, y) {
   } else {
     photoMarkup =
       '<circle cx="' + cx + '" cy="' + cy + '" r="' + (r - 1.5) + '" fill="#F7F1E6" stroke="' + color + '" stroke-width="3"/>' +
-      '<text x="' + cx + '" y="' + (cy + 8) + '" text-anchor="middle" font-family="Georgia, \'Times New Roman\', serif" font-size="24" font-weight="600" fill="' + color + '">' +
+      '<text x="' + cx + '" y="' + (cy + 8) + '" text-anchor="middle" font-family="Tahoma, Arial, sans-serif" font-size="24" font-weight="600" fill="' + color + '">' +
         escapeHtml(initialsOf(p.first_name)) + '</text>';
   }
 
@@ -647,10 +861,10 @@ function personNodeSVG(d, photoMap, x, y) {
   const tagY = nameY + 15;
   return (
     photoMarkup +
-    '<text x="' + cx + '" y="' + nameY + '" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="600" fill="#3A2E22">' +
+    '<text x="' + cx + '" y="' + nameY + '" text-anchor="middle" font-family="Tahoma, Arial, sans-serif" font-size="13" font-weight="600" fill="#3A2E22">' +
       escapeHtml(truncateForExport(p.first_name, 16)) + '</text>' +
-    '<text x="' + cx + '" y="' + tagY + '" text-anchor="middle" font-family="Arial, sans-serif" font-size="9.5" font-weight="700" letter-spacing="0.6" fill="' + color + '">' +
-      escapeHtml(p.gender.toUpperCase()) + '</text>'
+    '<text x="' + cx + '" y="' + tagY + '" text-anchor="middle" font-family="Tahoma, Arial, sans-serif" font-size="9.5" font-weight="700" letter-spacing="0.6" fill="' + color + '">' +
+      escapeHtml(t(p.gender === 'male' ? 'Male' : 'Female')) + '</text>'
   );
 }
 
@@ -682,13 +896,13 @@ async function buildExportSvgString() {
     return '<g>' + personNodeSVG(d, photoMap, x, y) + '</g>';
   }).join('');
 
-  const generatedDate = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  const generatedDate = new Date().toLocaleDateString(currentLanguage === 'ar' ? 'ar' : 'en', { year: 'numeric', month: 'long', day: 'numeric' });
 
   const svgString =
-    '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '">' +
+    '<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="' + width + '" height="' + height + '" viewBox="0 0 ' + width + ' ' + height + '" direction="' + (currentLanguage === 'ar' ? 'rtl' : 'ltr') + '">' +
       '<rect x="0" y="0" width="' + width + '" height="' + height + '" fill="#F7F1E6"/>' +
-      '<text x="' + (width / 2) + '" y="34" text-anchor="middle" font-family="Georgia, \'Times New Roman\', serif" font-size="22" font-weight="600" fill="#3A2E22">Family Tree</text>' +
-      '<text x="' + (width / 2) + '" y="55" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#9A8A72">Generated ' + generatedDate + '</text>' +
+      '<text x="' + (width / 2) + '" y="34" text-anchor="middle" font-family="Tahoma, Arial, sans-serif" font-size="22" font-weight="600" fill="#3A2E22">' + escapeHtml(t('Family Tree')) + '</text>' +
+      '<text x="' + (width / 2) + '" y="55" text-anchor="middle" font-family="Tahoma, Arial, sans-serif" font-size="11" fill="#9A8A72">' + escapeHtml(t('Generated')) + ' ' + generatedDate + '</text>' +
       linksSvg + nodesSvg +
     '</svg>';
 
@@ -745,7 +959,7 @@ async function exportAsJPG() {
     downloadDataUrl(canvas.toDataURL('image/jpeg', 0.93), 'family-tree.jpg');
     toast('Downloaded family-tree.jpg', 'success');
   } catch (err) {
-    toast(err.message || 'Export failed', 'danger');
+    toast(err.message ? localizedError(err) : t('Export failed'), 'danger');
   }
 }
 
@@ -767,7 +981,7 @@ async function exportAsPDF() {
     pdf.save('family-tree.pdf');
     toast('Downloaded family-tree.pdf', 'success');
   } catch (err) {
-    toast(err.message || 'Export failed', 'danger');
+    toast(err.message ? localizedError(err) : t('Export failed'), 'danger');
   }
 }
 
@@ -786,7 +1000,7 @@ async function exportDataJSON() {
     URL.revokeObjectURL(url);
     toast('Downloaded family-tree-backup.json', 'success');
   } catch (err) {
-    toast(err.message, 'danger');
+    toast(localizedError(err), 'danger');
   }
 }
 
@@ -812,9 +1026,9 @@ $('importFileInput').addEventListener('change', async (e) => {
   }
 
   const ok = await confirmDialog(
-    'Replace your current tree?',
-    'Importing this backup will permanently replace everyone currently in your tree with the people in this file. This cannot be undone.',
-    'Import & Replace'
+    t('Replace your current tree?'),
+    t('Importing this backup will permanently replace everyone currently in your tree with the people in this file. This cannot be undone.'),
+    t('Import & Replace')
   );
   if (!ok) return;
 
@@ -824,7 +1038,7 @@ $('importFileInput').addEventListener('change', async (e) => {
     closePersonPanel();
     await fetchPeople();
   } catch (err) {
-    toast(err.message, 'danger');
+    toast(localizedError(err), 'danger');
   }
 });
 
@@ -842,8 +1056,11 @@ $('exportPdfBtn').addEventListener('click', () => { $('exportMenu').classList.ad
 $('exportJpgBtn').addEventListener('click', () => { $('exportMenu').classList.add('hidden'); exportAsJPG(); });
 $('exportJsonBtn').addEventListener('click', () => { $('exportMenu').classList.add('hidden'); exportDataJSON(); });
 $('importJsonBtn').addEventListener('click', () => { $('exportMenu').classList.add('hidden'); triggerImportFile(); });
+$('languageBtn').addEventListener('click', toggleLanguage);
+$('loginLanguageBtn').addEventListener('click', toggleLanguage);
 
 /* ══════════════════════════════════════════════════════════
    INIT
 ═══════════════════════════════════════════════════════════ */
+applyLanguage();
 checkSession();

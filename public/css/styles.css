@@ -50,9 +50,10 @@ a{color:var(--gold-dark)}
   padding:20px;
 }
 .login-card{
-  background:var(--paper); border:1px solid var(--line); border-radius:20px;
+  position:relative;background:var(--paper); border:1px solid var(--line); border-radius:20px;
   box-shadow:var(--shadow-lg); width:380px; max-width:100%; padding:36px 32px;
 }
+.login-language-btn{position:absolute;top:12px;right:12px}
 .login-emblem{
   width:56px;height:56px;border-radius:50%;background:var(--gold-tint);border:1.5px solid var(--line-strong);
   display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 16px;
@@ -81,6 +82,11 @@ a{color:var(--gold-dark)}
 .btn-ghost{background:transparent;border-color:transparent;color:var(--ink-2)}
 .btn-ghost:hover{background:var(--bg-2)}
 .btn-sm{padding:7px 12px;font-size:12.5px;border-radius:8px}
+.language-btn{
+  border:1.5px solid var(--line-strong);border-radius:8px;background:var(--bg-2);color:var(--ink-2);
+  padding:7px 11px;font-size:12px;font-weight:700;white-space:nowrap;
+}
+.language-btn:hover{background:var(--gold-tint);border-color:var(--gold)}
 .login-error{
   background:var(--danger-tint);border:1px solid #E3C4C4;color:var(--danger);
   font-size:12.5px;padding:9px 12px;border-radius:8px;margin-bottom:14px;
@@ -286,3 +292,35 @@ a{color:var(--gold-dark)}
   .side-panel{width:100%}
   .brand-name{display:none}
 }
+
+html[lang="ar"] body,
+html[lang="ar"] button,
+html[lang="ar"] input,
+html[lang="ar"] select,
+html[lang="ar"] textarea{
+  font-family:Tahoma, Arial, sans-serif;
+}
+html[lang="ar"] h1,
+html[lang="ar"] h2,
+html[lang="ar"] h3,
+html[lang="ar"] .serif{
+  font-family:Tahoma, Arial, sans-serif;
+}
+html[dir="rtl"] .topbar-actions{margin-left:0;margin-right:auto}
+html[dir="rtl"] .login-language-btn{right:auto;left:12px}
+html[dir="rtl"] .export-menu{right:auto;left:0}
+html[dir="rtl"] .export-menu-item{text-align:right}
+html[dir="rtl"] .tree-controls{left:auto;right:20px}
+html[dir="rtl"] .fab-add-ancestor{right:auto;left:20px}
+html[dir="rtl"] .side-panel{
+  right:auto;left:0;border-left:0;border-right:1px solid var(--line);transform:translateX(-100%);
+}
+html[dir="rtl"] .side-panel.open{transform:translateX(0)}
+html[dir="rtl"] .panel-close{margin-left:0;margin-right:auto}
+html[dir="rtl"] #detailSaveBtn{margin-left:0 !important;margin-right:auto}
+html[dir="rtl"] .admin-table th{text-align:right}
+html[dir="rtl"] .admin-table td:last-child{text-align:left !important}
+html[dir="rtl"] .toast-item{border-left:0;border-right:3px solid var(--gold)}
+html[dir="rtl"] .toast-item.danger{border-right-color:var(--danger)}
+html[dir="rtl"] .toast-item.success{border-right-color:var(--branch)}
+html[dir="rtl"] .person-node{direction:rtl}

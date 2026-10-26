@@ -25,10 +25,12 @@ No build step, no framework tooling required — just Node.
 
 ```bash
 npm install
-node server.js
+npm start
 ```
 
-Then open **http://localhost:3000** in your browser.
+Run `npm install` once after downloading/cloning the project (or when its dependencies change). For later runs, use `npm start`.
+
+Then open **http://localhost:3002** in your browser.
 
 On first run, the app automatically creates an administrator account and prints the
 credentials to the terminal:
@@ -41,7 +43,7 @@ password: admin123
 **Sign in and change this password immediately** (click your name in the top-right corner →
 "Change password").
 
-To run on a different port: `PORT=8080 node server.js`.
+The app uses port **3002** by default. Hosting platforms can override this with the `PORT` environment variable.
 
 ## Deployment
 
@@ -57,6 +59,11 @@ Ready to share your family tree with others? See [DEPLOYMENT.md](DEPLOYMENT.md) 
   accounts, and assigning the Assistant role.
 - **Assistant** — can add, edit, and delete people in the tree and upload photos, but cannot
   manage user accounts.
+
+## Languages
+
+Use the language button on the sign-in screen or in the app header to switch between English
+and Arabic. The choice is saved in your browser, and Arabic uses a right-to-left layout.
 
 ## Using the tree
 
