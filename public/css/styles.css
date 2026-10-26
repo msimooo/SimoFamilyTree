@@ -166,6 +166,8 @@ a{color:var(--gold-dark)}
 .person-node.female .person-photo-wrap{border-color:var(--female)}
 .person-node:hover .person-photo-wrap{transform:translateY(-2px) scale(1.04);box-shadow:var(--shadow-lg)}
 .person-photo-wrap img{width:100%;height:100%;object-fit:cover}
+.person-photo-button{padding:0;cursor:zoom-in}
+.person-photo-button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
 .person-initial{font-family:'Lora',serif;font-size:22px;font-weight:600;color:var(--male)}
 .person-node.female .person-initial{color:var(--female)}
 .person-name{
@@ -179,6 +181,19 @@ a{color:var(--gold-dark)}
 .person-node.female .person-gender-tag{color:var(--female)}
 
 .tree-link{fill:none;stroke:var(--branch);stroke-width:2;opacity:.55}
+
+.photo-preview-overlay{
+  position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;
+  flex-direction:column;gap:14px;padding:56px 24px 24px;background:rgba(24,20,17,.92);
+}
+.photo-preview-overlay.open{display:flex}
+.photo-preview-overlay img{display:block;max-width:min(92vw,1200px);max-height:82vh;object-fit:contain}
+.photo-preview-overlay p{color:#fff;font-size:16px;font-weight:600;text-align:center}
+.photo-preview-close{
+  position:absolute;top:18px;right:20px;width:42px;height:42px;border:1px solid rgba(255,255,255,.4);
+  border-radius:50%;background:rgba(255,255,255,.12);color:#fff;font-size:20px;
+}
+.photo-preview-close:hover{background:rgba(255,255,255,.24)}
 
 /* ══ MODAL / DRAWER SHARED ══ */
 .overlay{position:fixed;inset:0;background:rgba(58,46,34,.35);z-index:60;opacity:0;pointer-events:none;transition:opacity .18s;backdrop-filter:blur(1px)}
@@ -322,6 +337,7 @@ html[dir="rtl"] .side-panel{
 html[dir="rtl"] .side-panel.open{transform:translateX(0)}
 html[dir="rtl"] .panel-close{margin-left:0;margin-right:auto}
 html[dir="rtl"] #detailSaveBtn{margin-left:0 !important;margin-right:auto}
+html[dir="rtl"] .photo-preview-close{right:auto;left:20px}
 html[dir="rtl"] .admin-table th{text-align:right}
 html[dir="rtl"] .admin-table td:last-child{text-align:left !important}
 html[dir="rtl"] .toast-item{border-left:0;border-right:3px solid var(--gold)}

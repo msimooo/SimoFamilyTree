@@ -22,6 +22,9 @@ check the provider's current pricing before relying on it for production data.
    `admin` / `admin123` account only if the database has no users. Change this password
    immediately.
 
+Signed-in sessions are stored in PostgreSQL and last up to 30 days while the user remains
+active. The app does not store passwords in the browser. Logging out ends the session.
+
 Render supplies `PORT` automatically; local runs use port `3002`. Do not set `DATA_DIR` or
 `UPLOAD_DIR` for this PostgreSQL version.
 

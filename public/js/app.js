@@ -112,6 +112,8 @@ const arabicTranslations = {
   'Saved': 'تم الحفظ',
   'Photo updated': 'تم تحديث الصورة',
   'Photo removed': 'تمت إزالة الصورة',
+  'View photo of': 'عرض صورة',
+  'Close photo': 'إغلاق الصورة',
   'Person deleted': 'تم حذف الشخص',
   'Branch deleted': 'تم حذف الفرع',
   'Role updated': 'تم تحديث الدور',
@@ -467,8 +469,8 @@ function buildForest(people) {
 
 function personNodeHTML(p) {
   const photo = p.photo_path
-    ? '<img src="' + escapeHtml(p.photo_path) + '" alt="">'
-    : '<span class="person-initial">' + escapeHtml(initialsOf(p.first_name)) + '</span>';
+    ? '<button type="button" class="person-photo-wrap person-photo-button" aria-label="' + escapeHtml(t('View photo of') + ' ' + p.first_name) + '"><img src="' + escapeHtml(p.photo_path) + '" alt=""></button>'
+    : '<div class="person-photo-wrap"><span class="person-initial">' + escapeHtml(initialsOf(p.first_name)) + '</span></div>';
   return (
     '<div class="person-photo-wrap">' + photo + '</div>' +
     '<div class="person-name">' + escapeHtml(p.first_name) + '</div>'
@@ -518,7 +520,14 @@ function renderTree() {
     .append('xhtml:div')
     .attr('class', (d) => 'person-node ' + d.data.gender)
     .html((d) => personNodeHTML(d.data))
-    .on('click', (event, d) => openPersonPanel(d.data.id));
+    .on('click', (event, d) => {
+      if (event.target.closest('.person-photo-button')) {
+        event.stopPropagation();
+        openPhotoPreview(d.data);
+        return;
+      }
+      openPersonPanel(d.data.id);
+    });
 
   centerTree(nodes);
 }
@@ -593,6 +602,39 @@ function closePersonPanel() {
 }
 $('personPanelClose').addEventListener('click', closePersonPanel);
 $('personPanelOverlay').addEventListener('click', closePersonPanel);
+
+let photoPreviewTrigger = null;
+function openPhotoPreview(person) {
+  photoPreviewTrigger = document.activeElement;
+  $('photoPreviewImage').src = person.photo_path;
+  $('photoPreviewImage').alt = person.first_name;
+  $('photoPreviewCaption').textContent = person.first_name;
+  $('photoPreview').setAttribute('aria-label', t('View photo of') + ' ' + person.first_name);
+  $('photoPreviewClose').setAttribute('aria-label', t('Close photo'));
+  $('photoPreview').setAttribute('aria-hidden', 'false');
+  $('photoPreview').classList.add('open');
+  $('photoPreviewClose').focus();
+}
+function closePhotoPreview() {
+  if (!$('photoPreview').classList.contains('open')) return;
+  $('photoPreview').classList.remove('open');
+  $('photoPreview').setAttribute('aria-hidden', 'true');
+  $('photoPreviewImage').removeAttribute('src');
+  if (photoPreviewTrigger && photoPreviewTrigger.isConnected) photoPreviewTrigger.focus();
+  photoPreviewTrigger = null;
+}
+$('photoPreviewClose').addEventListener('click', closePhotoPreview);
+$('photoPreview').addEventListener('click', (event) => {
+  if (event.target === $('photoPreview')) closePhotoPreview();
+});
+document.addEventListener('keydown', (event) => {
+  if (!$('photoPreview').classList.contains('open')) return;
+  if (event.key === 'Escape') closePhotoPreview();
+  if (event.key === 'Tab') {
+    event.preventDefault();
+    $('photoPreviewClose').focus();
+  }
+});
 
 function updateDetailPhoto(p) {
   const wrap = $('detailPhotoWrap');

@@ -3,8 +3,9 @@ require('dotenv').config();
 const path = require('path');
 const express = require('express');
 const session = require('express-session');
+const createPgSession = require('connect-pg-simple');
 
-const { initializeDatabase } = require('./db');
+const { db, initializeDatabase } = require('./db');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const peopleRoutes = require('./routes/people');
@@ -12,6 +13,9 @@ const settingsRoutes = require('./routes/settings');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
+const PgSession = createPgSession(session);
+
+app.set('trust proxy', 1);
 
 app.use(express.json({ limit: '60mb' }));
 app.use(express.urlencoded({ extended: true, limit: '60mb' }));
@@ -20,12 +24,19 @@ app.use(
   session({
     name: 'familytree.sid',
     secret: process.env.SESSION_SECRET || 'family-tree-dev-secret-change-me',
+    store: new PgSession({
+      pool: db,
+      tableName: 'familytree_sessions',
+      createTableIfMissing: true,
+    }),
     resave: false,
     saveUninitialized: false,
+    rolling: true,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 1 week
+      maxAge: 1000 * 60 * 60 * 24 * 30,
       httpOnly: true,
       sameSite: 'lax',
+      secure: 'auto',
     },
   })
 );
