@@ -29,7 +29,8 @@
       </div>
       <button type="submit" class="btn btn-primary btn-block" data-i18n="Sign In">Sign In</button>
     </form>
-    <p class="login-hint"><span data-i18n="First time here? Default administrator login:">First time here? Default administrator login:</span><br><b>admin</b> / <b>admin123</b> — <span data-i18n="please change this after signing in.">please change this after signing in.</span></p>
+    <p class="login-hint" id="loginHint"><span data-i18n="First time here? Default administrator login:">First time here? Default administrator login:</span><br><b>admin</b> / <b>admin123</b> — <span data-i18n="please change this after signing in.">please change this after signing in.</span></p>
+    <button type="button" class="btn btn-outline btn-block hidden" id="returnPublicBtn" data-i18n="Return to public tree">Return to public tree</button>
   </div>
 </div>
 
@@ -47,14 +48,15 @@
           <div class="export-menu-label" data-i18n="Share & print">Share &amp; print</div>
           <button type="button" id="exportPdfBtn" class="export-menu-item" data-i18n="📄 Export as PDF">📄 Export as PDF</button>
           <button type="button" id="exportJpgBtn" class="export-menu-item" data-i18n="🖼️ Export as JPG">🖼️ Export as JPG</button>
-          <div class="export-menu-divider"></div>
-          <div class="export-menu-label" data-i18n="Backup & transfer">Backup &amp; transfer</div>
+          <div class="export-menu-divider" id="backupExportDivider"></div>
+          <div class="export-menu-label" id="backupExportLabel" data-i18n="Backup & transfer">Backup &amp; transfer</div>
           <button type="button" id="exportJsonBtn" class="export-menu-item" data-i18n="💾 Save Tree to File">💾 Save Tree to File</button>
           <button type="button" id="importJsonBtn" class="export-menu-item" data-i18n="📥 Import Tree from File">📥 Import Tree from File</button>
         </div>
       </div>
       <button id="manageUsersBtn" class="btn btn-outline btn-sm hidden" data-i18n="Manage Users">Manage Users</button>
       <button type="button" class="language-btn" id="languageBtn" aria-label="Switch language">العربية</button>
+      <button type="button" class="btn btn-outline btn-sm hidden" id="publicLoginBtn" data-i18n="Administrator Login">Administrator Login</button>
       <div class="user-chip" id="userChip">
         <div class="user-avatar" id="userAvatar">–</div>
         <div>
@@ -82,7 +84,7 @@
     <div class="empty-tree hidden" id="emptyTree">
       <div class="e-icon">🌱</div>
       <h2 data-i18n="Your tree is empty">Your tree is empty</h2>
-      <p data-i18n="Every family tree starts with its first ancestor. Add one to begin — you can branch out sons, daughters, and further generations from there.">Every family tree starts with its first ancestor. Add one to begin — you can branch out sons, daughters, and further generations from there.</p>
+      <p id="emptyTreeDescription" data-i18n="Every family tree starts with its first ancestor. Add one to begin — you can branch out sons, daughters, and further generations from there.">Every family tree starts with its first ancestor. Add one to begin — you can branch out sons, daughters, and further generations from there.</p>
       <button class="btn btn-primary" id="emptyAddAncestorBtn"><span aria-hidden="true">＋ </span><span data-i18n="Add First Ancestor">Add First Ancestor</span></button>
     </div>
   </div>
@@ -98,7 +100,7 @@
   <div class="panel-body">
     <div class="detail-photo-row">
       <div class="detail-photo" id="detailPhotoWrap"><span class="person-initial">?</span></div>
-      <div class="detail-photo-actions">
+      <div class="detail-photo-actions" id="detailPhotoActions">
         <button class="btn btn-outline btn-sm file-btn">
           <span data-i18n="Change Photo">Change Photo</span>
           <input type="file" id="detailPhotoInput" accept="image/*">
@@ -107,12 +109,12 @@
       </div>
     </div>
 
-    <div class="form-row">
+    <div class="form-row" id="detailNameRow">
       <label class="field-label" data-i18n="First Name">First Name</label>
       <input id="detailName" type="text" class="text-field">
     </div>
 
-    <div class="form-row">
+    <div class="form-row" id="detailGenderRow">
       <label class="field-label" data-i18n="Gender">Gender</label>
       <div class="pill-group">
         <button type="button" class="pill-opt" data-gender="male" id="detailGenderMale" data-i18n="Male">Male</button>
@@ -123,14 +125,14 @@
     <div class="meta-line" id="detailFatherLine"></div>
     <div class="meta-line" id="detailChildrenLine"></div>
 
-    <div class="section-label" data-i18n="Add a relative">Add a relative</div>
-    <div class="relation-grid">
+    <div class="section-label" id="relativeSectionLabel" data-i18n="Add a relative">Add a relative</div>
+    <div class="relation-grid" id="relationGrid">
       <button class="relation-btn" id="addSonBtn"><span class="r-icon">👦</span><span data-i18n="Add Son">Add Son</span></button>
       <button class="relation-btn" id="addDaughterBtn"><span class="r-icon">👧</span><span data-i18n="Add Daughter">Add Daughter</span></button>
       <button class="relation-btn" id="addFatherBtn" style="grid-column:1 / -1"><span class="r-icon">⬆️</span><span data-i18n="Add Father (extend upward)">Add Father (extend upward)</span></button>
     </div>
   </div>
-  <div class="panel-footer">
+  <div class="panel-footer" id="personPanelFooter">
     <button class="btn btn-danger-outline" id="detailDeleteBtn" data-i18n="Delete">Delete</button>
     <button class="btn btn-primary" id="detailSaveBtn" style="margin-left:auto" data-i18n="Save Changes">Save Changes</button>
   </div>
@@ -187,6 +189,14 @@
       <thead><tr><th data-i18n="Name">Name</th><th data-i18n="Role">Role</th><th></th></tr></thead>
       <tbody id="usersTableBody"></tbody>
     </table>
+
+    <div class="section-label" data-i18n="Public access">Public access</div>
+    <p class="public-access-warning" data-i18n="Anyone with your site link can view all names, family relationships, and photos. Visitors cannot make changes.">Anyone with your site link can view all names, family relationships, and photos. Visitors cannot make changes.</p>
+    <label class="public-setting-toggle">
+      <input type="checkbox" id="publicTreeToggle">
+      <span data-i18n="Allow public viewing without login">Allow public viewing without login</span>
+    </label>
+    <p id="publicSettingStatus" class="public-setting-status" role="status"></p>
 
     <div class="section-label" data-i18n="Add a user">Add a user</div>
     <div class="form-row">

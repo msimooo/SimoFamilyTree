@@ -2,11 +2,10 @@ const express = require('express');
 const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
-const { db, UPLOAD_DIR } = require('../db');
+const { db, UPLOAD_DIR, isPublicTreeEnabled } = require('../db');
 const { requireAuth, requireAdmin } = require('../middleware/auth');
 
 const router = express.Router();
-router.use(requireAuth);
 
 const upload = multer({
   storage: multer.diskStorage({
@@ -33,9 +32,19 @@ function removePhotoFile(photoPath) {
 
 // ── list everyone (client builds the tree) ──
 router.get('/', (req, res) => {
-  const rows = db.prepare('SELECT * FROM people ORDER BY id ASC').all();
+  const authenticated = req.session && req.session.user;
+  if (!authenticated && !isPublicTreeEnabled()) {
+    return res.status(401).json({ error: 'Not authenticated' });
+  }
+  const rows = db.prepare(
+    authenticated
+      ? 'SELECT * FROM people ORDER BY id ASC'
+      : 'SELECT id, first_name, gender, father_id, photo_path FROM people ORDER BY id ASC'
+  ).all();
   res.json({ people: rows });
 });
+
+router.use(requireAuth);
 
 // ── export the full tree as one portable, self-contained JSON file (photos embedded as base64) ──
 router.get('/export', (req, res) => {

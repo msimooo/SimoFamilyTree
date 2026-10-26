@@ -33,8 +33,15 @@ db.exec(`
     updated_at  INTEGER NOT NULL
   );
 
+  CREATE TABLE IF NOT EXISTS settings (
+    key   TEXT PRIMARY KEY,
+    value TEXT NOT NULL
+  );
+
   CREATE INDEX IF NOT EXISTS idx_people_father ON people(father_id);
 `);
+
+db.prepare("INSERT OR IGNORE INTO settings (key, value) VALUES ('public_tree_enabled', '0')").run();
 
 // ── seed a default administrator on first run ──
 const userCount = db.prepare('SELECT COUNT(*) AS c FROM users').get().c;
@@ -53,4 +60,8 @@ if (userCount === 0) {
   console.log('─────────────────────────────────────────────────');
 }
 
-module.exports = { db, DATA_DIR, UPLOAD_DIR };
+function isPublicTreeEnabled() {
+  return db.prepare("SELECT value FROM settings WHERE key = 'public_tree_enabled'").get().value === '1';
+}
+
+module.exports = { db, DATA_DIR, UPLOAD_DIR, isPublicTreeEnabled };

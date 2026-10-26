@@ -7,6 +7,8 @@ const state = {
   user: null,
   people: [],
   users: [],
+  isPublicView: false,
+  publicAccessEnabled: false,
 };
 
 const arabicTranslations = {
@@ -24,11 +26,22 @@ const arabicTranslations = {
   '💾 Save Tree to File': '💾 حفظ الشجرة في ملف',
   '📥 Import Tree from File': '📥 استيراد شجرة من ملف',
   'Manage Users': 'إدارة المستخدمين',
+  'Administrator Login': 'دخول المسؤول',
+  'Return to public tree': 'العودة إلى الشجرة العامة',
+  'Public access': 'إتاحة العرض العام',
+  'Anyone with your site link can view all names, family relationships, and photos. Visitors cannot make changes.': 'يمكن لأي شخص لديه رابط الموقع مشاهدة الأسماء وصِلات القرابة والصور. لا يمكن للزوار إجراء تغييرات.',
+  'Allow public viewing without login': 'السماح بعرض الشجرة للعامة دون تسجيل دخول',
+  'Public viewing is enabled. Anyone with the site link can view the tree.': 'العرض العام مفعّل. يمكن لأي شخص لديه رابط الموقع مشاهدة الشجرة.',
+  'Public viewing is disabled. Sign-in is required to view the tree.': 'العرض العام متوقف. يلزم تسجيل الدخول لمشاهدة الشجرة.',
+  'Saving public access setting…': 'جارٍ حفظ إعدادات العرض العام…',
+  'Public access setting saved': 'تم حفظ إعداد العرض العام',
+  'Public access must be enabled or disabled': 'يجب تحديد ما إذا كان العرض العام مفعّلًا أم متوقفًا',
   'Zoom in': 'تكبير',
   'Zoom out': 'تصغير',
   'Reset view': 'إعادة ضبط العرض',
   'Add Ancestor': 'إضافة أحد الأجداد',
   'Your tree is empty': 'شجرتك فارغة',
+  'The public family tree is empty.': 'شجرة العائلة العامة فارغة.',
   'Every family tree starts with its first ancestor. Add one to begin — you can branch out sons, daughters, and further generations from there.': 'تبدأ كل شجرة عائلة بأحد الأجداد. أضف أول شخص للبدء، ثم أضف الأبناء والأجيال التالية.',
   'Add First Ancestor': 'إضافة أول الأجداد',
   'Person': 'الشخص',
@@ -190,6 +203,9 @@ function applyLanguage() {
   }
   if (relFormRelation) updateRelFormLabels();
   if (state.user && state.user.role === 'admin') renderUsersTable();
+  if ($('publicSettingStatus').dataset.message) {
+    $('publicSettingStatus').textContent = t($('publicSettingStatus').dataset.message);
+  }
 }
 
 function roleLabel(role) {
@@ -303,18 +319,29 @@ function hideOverlay(overlayId, boxId) {
 ═══════════════════════════════════════════════════════════ */
 async function checkSession() {
   const data = await api('/auth/me');
+  const publicData = await api('/settings/public');
+  state.publicAccessEnabled = publicData.enabled;
   if (data.user) {
     state.user = data.user;
-    enterApp();
+    await enterApp();
   } else {
-    showLogin();
+    if (state.publicAccessEnabled) await enterPublicApp();
+    else showLogin();
   }
 }
 function showLogin() {
+  document.body.classList.remove('public-view');
+  $('publicLoginBtn').classList.add('hidden');
+  $('returnPublicBtn').classList.toggle('hidden', !state.publicAccessEnabled);
+  $('loginHint').classList.toggle('hidden', state.publicAccessEnabled);
   $('loginScreen').classList.remove('hidden');
   $('app').classList.add('hidden');
 }
 async function enterApp() {
+  state.isPublicView = false;
+  document.body.classList.remove('public-view');
+  $('publicLoginBtn').classList.add('hidden');
+  $('returnPublicBtn').classList.add('hidden');
   $('loginScreen').classList.add('hidden');
   $('app').classList.remove('hidden');
   $('userChipName').textContent = state.user.display_name;
@@ -322,6 +349,18 @@ async function enterApp() {
   $('userAvatar').textContent = initialsOf(state.user.display_name);
   $('manageUsersBtn').classList.toggle('hidden', state.user.role !== 'admin');
   $('importJsonBtn').classList.toggle('hidden', state.user.role !== 'admin');
+  initTreeSvgIfNeeded();
+  await fetchPeople();
+}
+async function enterPublicApp() {
+  state.user = null;
+  state.isPublicView = true;
+  document.body.classList.add('public-view');
+  $('loginScreen').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  $('publicLoginBtn').classList.remove('hidden');
+  $('manageUsersBtn').classList.add('hidden');
+  $('importJsonBtn').classList.add('hidden');
   initTreeSvgIfNeeded();
   await fetchPeople();
 }
@@ -347,8 +386,12 @@ $('logoutBtn').addEventListener('click', async () => {
   await api('/auth/logout', { method: 'POST' });
   state.user = null;
   hideOverlay('accountOverlay', 'accountModal');
-  showLogin();
+  if (state.publicAccessEnabled) await enterPublicApp();
+  else showLogin();
 });
+
+$('publicLoginBtn').addEventListener('click', showLogin);
+$('returnPublicBtn').addEventListener('click', enterPublicApp);
 
 $('userChip').addEventListener('click', () => {
   $('accountSub').textContent = state.user.display_name + ' · ' + roleLabel(state.user.role);
@@ -435,6 +478,10 @@ function personNodeHTML(p) {
 function renderTree() {
   const people = state.people;
   $('emptyTree').classList.toggle('hidden', people.length > 0);
+  $('emptyTreeDescription').textContent = state.isPublicView
+    ? t('The public family tree is empty.')
+    : t('Every family tree starts with its first ancestor. Add one to begin — you can branch out sons, daughters, and further generations from there.');
+  $('emptyAddAncestorBtn').classList.toggle('hidden', state.isPublicView);
 
   const g = d3.select('#treeRoot');
   g.selectAll('*').remove();
@@ -517,6 +564,12 @@ function openPersonPanel(id) {
   updatePersonMetadata(p);
 
   $('personPanel').querySelector('h2').textContent = p.first_name;
+  $('detailNameRow').classList.toggle('hidden', state.isPublicView);
+  $('detailGenderRow').classList.toggle('hidden', state.isPublicView);
+  $('detailPhotoActions').classList.toggle('hidden', state.isPublicView);
+  $('relativeSectionLabel').classList.toggle('hidden', state.isPublicView);
+  $('relationGrid').classList.toggle('hidden', state.isPublicView);
+  $('personPanelFooter').classList.toggle('hidden', state.isPublicView);
   showOverlay('personPanelOverlay', 'personPanel');
   $('personPanel').classList.add('open');
 }
@@ -731,7 +784,12 @@ $('emptyAddAncestorBtn').addEventListener('click', () => openRelForm('root', nul
 let newUserRole = 'assistant';
 
 $('manageUsersBtn').addEventListener('click', async () => {
-  await fetchUsers();
+  try {
+    await Promise.all([fetchUsers(), fetchPublicAccess()]);
+  } catch (err) {
+    toast(localizedError(err), 'danger');
+    return;
+  }
   showOverlay('adminPanelOverlay', 'adminPanel');
   $('adminPanel').classList.add('open');
 });
@@ -743,6 +801,39 @@ async function fetchUsers() {
   state.users = data.users;
   renderUsersTable();
 }
+async function fetchPublicAccess() {
+  const data = await api('/settings/public');
+  state.publicAccessEnabled = data.enabled;
+  $('publicTreeToggle').checked = data.enabled;
+  updatePublicSettingStatus(data.enabled
+    ? 'Public viewing is enabled. Anyone with the site link can view the tree.'
+    : 'Public viewing is disabled. Sign-in is required to view the tree.');
+}
+function updatePublicSettingStatus(message) {
+  $('publicSettingStatus').dataset.message = message;
+  $('publicSettingStatus').textContent = t(message);
+}
+$('publicTreeToggle').addEventListener('change', async () => {
+  const requestedValue = $('publicTreeToggle').checked;
+  $('publicTreeToggle').disabled = true;
+  updatePublicSettingStatus('Saving public access setting…');
+  try {
+    const data = await apiJSON('/settings/public', 'PUT', { enabled: requestedValue });
+    state.publicAccessEnabled = data.enabled;
+    updatePublicSettingStatus(data.enabled
+      ? 'Public viewing is enabled. Anyone with the site link can view the tree.'
+      : 'Public viewing is disabled. Sign-in is required to view the tree.');
+    toast(t('Public access setting saved'), 'success');
+  } catch (err) {
+    $('publicTreeToggle').checked = state.publicAccessEnabled;
+    updatePublicSettingStatus(state.publicAccessEnabled
+      ? 'Public viewing is enabled. Anyone with the site link can view the tree.'
+      : 'Public viewing is disabled. Sign-in is required to view the tree.');
+    toast(localizedError(err), 'danger');
+  } finally {
+    $('publicTreeToggle').disabled = false;
+  }
+});
 function renderUsersTable() {
   $('usersTableBody').innerHTML = state.users.map((u) => {
     const isSelf = state.user && u.id === state.user.id;

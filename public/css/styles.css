@@ -271,6 +271,10 @@ a{color:var(--gold-dark)}
 }
 .role-badge.admin{background:var(--gold-tint);color:var(--gold-dark)}
 .role-badge.assistant{background:var(--male-tint);color:var(--male)}
+.public-access-warning,.public-setting-status{font-size:12px;color:var(--ink-2);line-height:1.55}
+.public-setting-toggle{display:flex;align-items:center;gap:9px;margin-top:12px;color:var(--ink);font-size:13px;font-weight:600;cursor:pointer}
+.public-setting-toggle input{width:17px;height:17px;accent-color:var(--gold)}
+.public-setting-status{margin-top:8px}
 
 /* ══ TOAST ══ */
 #toastContainer{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);z-index:200;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
@@ -324,3 +328,17 @@ html[dir="rtl"] .toast-item{border-left:0;border-right:3px solid var(--gold)}
 html[dir="rtl"] .toast-item.danger{border-right-color:var(--danger)}
 html[dir="rtl"] .toast-item.success{border-right-color:var(--branch)}
 html[dir="rtl"] .person-node{direction:rtl}
+body.public-view #userChip,
+body.public-view #manageUsersBtn,
+body.public-view #importJsonBtn,
+body.public-view #exportJsonBtn,
+body.public-view #backupExportDivider,
+body.public-view #backupExportLabel,
+body.public-view #addAncestorBtn,
+body.public-view #emptyAddAncestorBtn,
+body.public-view #detailPhotoActions,
+body.public-view #detailNameRow,
+body.public-view #detailGenderRow,
+body.public-view #relativeSectionLabel,
+body.public-view #relationGrid,
+body.public-view #personPanelFooter{display:none !important}

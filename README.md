@@ -65,6 +65,14 @@ Ready to share your family tree with others? See [DEPLOYMENT.md](DEPLOYMENT.md) 
 Use the language button on the sign-in screen or in the app header to switch between English
 and Arabic. The choice is saved in your browser, and Arabic uses a right-to-left layout.
 
+## Public viewing
+
+Public viewing is off by default. Administrators can turn it on under **Manage Users → Public
+access**. When enabled, anyone with the site link can view names, family relationships, and
+photos without an account; public visitors cannot edit the tree or manage accounts. Turning
+public viewing off requires visitors to sign in again. Keep in mind that enabling this exposes
+family information and photos to anyone who can access the site.
+
 ## Using the tree
 
 - **Add Ancestor** (bottom-right button) starts a brand new family line — useful for your very

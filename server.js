@@ -2,10 +2,11 @@ const path = require('path');
 const express = require('express');
 const session = require('express-session');
 
-const { UPLOAD_DIR } = require('./db'); // also runs schema init / admin seed
+const { UPLOAD_DIR, isPublicTreeEnabled } = require('./db'); // also runs schema init / admin seed
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const peopleRoutes = require('./routes/people');
+const settingsRoutes = require('./routes/settings');
 
 const app = express();
 const PORT = process.env.PORT || 3002;
@@ -27,12 +28,16 @@ app.use(
   })
 );
 
-app.use('/uploads', express.static(UPLOAD_DIR));
+app.use('/uploads', (req, res, next) => {
+  if ((req.session && req.session.user) || isPublicTreeEnabled()) return next();
+  return res.status(401).json({ error: 'Not authenticated' });
+}, express.static(UPLOAD_DIR));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/people', peopleRoutes);
+app.use('/api/settings', settingsRoutes);
 
 app.use((req, res, next) => {
   if (req.method !== 'GET' || req.path.startsWith('/api/')) return next();
