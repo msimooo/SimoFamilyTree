@@ -9,15 +9,13 @@ const state = {
   users: [],
   isPublicView: false,
   publicAccessEnabled: false,
-  treeLayout: localStorage.getItem('rootline-tree-layout') === 'compact' ? 'compact' : 'classic',
+  treeLayout: localStorage.getItem('rootline-tree-layout') === 'classic' ? 'classic' : 'straight',
 };
 
 const arabicTranslations = {
   'Classic': 'تقليدي',
-  'Compact': 'مضغوط',
+  'Straight lines': 'خطوط مستقيمة',
   'Tree layout': 'تخطيط الشجرة',
-  'Expand branch': 'توسيع الفرع',
-  'Collapse branch': 'طيّ الفرع',
   'Sign in to view and manage your family tree': 'سجّل الدخول لعرض شجرة عائلتك وإدارتها',
   'Username': 'اسم المستخدم',
   'Password': 'كلمة المرور',
@@ -210,7 +208,7 @@ function applyLanguage() {
     updatePersonMetadata(person);
     if (person) $('personPanel').querySelector('h2').textContent = person.first_name;
   }
-  updateCompactTreeLabels();
+
   if (relFormRelation) updateRelFormLabels();
   if (state.user && state.user.role === 'admin') renderUsersTable();
   if ($('publicSettingStatus').dataset.message) {
@@ -459,46 +457,21 @@ function initTreeSvgIfNeeded() {
   document.querySelectorAll('[data-tree-layout]').forEach((button) => {
     button.addEventListener('click', () => setTreeLayout(button.dataset.treeLayout));
   });
-  $('compactTree').addEventListener('click', (event) => {
-    const toggle = event.target.closest('.compact-branch-toggle');
-    if (toggle) {
-      const children = toggle.parentElement.nextElementSibling;
-      const expanded = toggle.getAttribute('aria-expanded') === 'true';
-      children.hidden = expanded;
-      toggle.setAttribute('aria-expanded', String(!expanded));
-      toggle.setAttribute('aria-label', t(expanded ? 'Expand branch' : 'Collapse branch'));
-      toggle.textContent = expanded ? '+' : '−';
-      return;
-    }
-
-    const photoButton = event.target.closest('.compact-photo-button');
-    if (photoButton) {
-      const person = findPerson(photoButton.dataset.personId);
-      if (person) openPhotoPreview(person);
-      return;
-    }
-
-    const personButton = event.target.closest('.compact-person-name');
-    if (personButton) openPersonPanel(personButton.dataset.personId);
-  });
 
   window.addEventListener('resize', () => {
-    if (state.treeLayout === 'classic') centerTree(currentTreeNodes);
+    centerTree(currentTreeNodes);
   });
   setTreeLayout(state.treeLayout);
 }
 
 function setTreeLayout(layout) {
-  state.treeLayout = layout === 'compact' ? 'compact' : 'classic';
+  state.treeLayout = layout === 'classic' ? 'classic' : 'straight';
   localStorage.setItem('rootline-tree-layout', state.treeLayout);
-  const isCompact = state.treeLayout === 'compact';
-  $('treeSvg').classList.toggle('hidden', isCompact);
-  $('compactTree').classList.toggle('hidden', !isCompact);
-  document.querySelector('.tree-controls').classList.toggle('hidden', isCompact);
+  $('treeWrap').classList.toggle('straight-tree', state.treeLayout === 'straight');
   document.querySelectorAll('[data-tree-layout]').forEach((button) => {
     button.setAttribute('aria-pressed', String(button.dataset.treeLayout === state.treeLayout));
   });
-  if (!isCompact) centerTree(currentTreeNodes);
+  renderTree();
 }
 
 function buildForest(people) {
@@ -516,7 +489,14 @@ function buildForest(people) {
   return virtualRoot;
 }
 
-function personNodeHTML(p) {
+function personNodeHTML(p, isStraight) {
+  if (isStraight) {
+    const avatar = p.photo_path
+      ? '<button type="button" class="straight-person-avatar person-photo-button" aria-label="' + escapeHtml(t('View photo of') + ' ' + p.first_name) + '"><img src="' + escapeHtml(p.photo_path) + '" alt=""></button>'
+      : '<span class="straight-person-avatar ' + escapeHtml(p.gender) + '">' + escapeHtml(initialsOf(p.first_name)) + '</span>';
+    return '<div class="straight-person-card">' + avatar + '<span class="straight-person-name">' + escapeHtml(p.first_name) + '</span></div>';
+  }
+
   const photo = p.photo_path
     ? '<button type="button" class="person-photo-wrap person-photo-button" aria-label="' + escapeHtml(t('View photo of') + ' ' + p.first_name) + '"><img src="' + escapeHtml(p.photo_path) + '" alt=""></button>'
     : '<div class="person-photo-wrap"><span class="person-initial">' + escapeHtml(initialsOf(p.first_name)) + '</span></div>';
@@ -536,12 +516,14 @@ function renderTree() {
 
   const g = d3.select('#treeRoot');
   g.selectAll('*').remove();
-  renderCompactTree();
 
   if (!people.length) { currentTreeNodes = []; currentTreeLinks = []; return; }
 
   const hierarchyData = d3.hierarchy(buildForest(people), (d) => d.children);
-  const layout = d3.tree().nodeSize([NODE_W, NODE_H]);
+  const isStraight = state.treeLayout === 'straight';
+  const cardWidth = isStraight ? 136 : NODE_W;
+  const cardHeight = isStraight ? 52 : NODE_H;
+  const layout = d3.tree().nodeSize(isStraight ? [68, 190] : [NODE_W, NODE_H]);
   layout(hierarchyData);
 
   const nodes = hierarchyData.descendants().filter((d) => d.data.id !== '__virtual__');
@@ -549,27 +531,31 @@ function renderTree() {
   currentTreeNodes = nodes;
   currentTreeLinks = links;
 
-  const linkGen = d3.linkVertical().x((d) => d.x).y((d) => d.y);
+  const linkPaths = isStraight
+    ? straightTreeLinkPaths(links)
+    : links.map((link) => d3.linkVertical().x((d) => d.x).y((d) => d.y)(link));
   g.selectAll('path.tree-link')
-    .data(links)
+    .data(linkPaths)
     .enter()
     .append('path')
-    .attr('class', 'tree-link')
-    .attr('d', linkGen);
+    .attr('class', 'tree-link' + (isStraight ? ' tree-link-straight' : ''))
+    .attr('d', (path) => path);
 
   const nodeSel = g.selectAll('g.tree-node')
     .data(nodes, (d) => d.data.id)
     .enter()
     .append('g')
     .attr('class', 'tree-node')
-    .attr('transform', (d) => 'translate(' + (d.x - NODE_W / 2) + ',' + (d.y - 8) + ')');
+    .attr('transform', (d) => isStraight
+      ? 'translate(' + (d.y - cardWidth / 2) + ',' + (d.x - cardHeight / 2) + ')'
+      : 'translate(' + (d.x - cardWidth / 2) + ',' + (d.y - cardHeight / 2) + ')');
 
   nodeSel.append('foreignObject')
-    .attr('width', NODE_W)
-    .attr('height', NODE_H)
+    .attr('width', cardWidth)
+    .attr('height', cardHeight)
     .append('xhtml:div')
-    .attr('class', (d) => 'person-node ' + d.data.gender)
-    .html((d) => personNodeHTML(d.data))
+    .attr('class', (d) => 'person-node ' + d.data.gender + (isStraight ? ' straight-person-node' : ''))
+    .html((d) => personNodeHTML(d.data, isStraight))
     .on('click', (event, d) => {
       if (event.target.closest('.person-photo-button')) {
         event.stopPropagation();
@@ -579,44 +565,36 @@ function renderTree() {
       openPersonPanel(d.data.id);
     });
 
-  if (state.treeLayout === 'classic') centerTree(nodes);
+  centerTree(nodes);
 }
 
-function renderCompactTree() {
-  const roots = buildForest(state.people).children;
-  const renderPerson = (person) => {
-    const children = person.children || [];
-    const photo = person.photo_path
-      ? '<button type="button" class="compact-avatar compact-photo-button" data-person-id="' + person.id + '" aria-label="' + escapeHtml(t('View photo of') + ' ' + person.first_name) + '"><img src="' + escapeHtml(person.photo_path) + '" alt=""></button>'
-      : '<span class="compact-avatar ' + escapeHtml(person.gender) + '">' + escapeHtml(initialsOf(person.first_name)) + '</span>';
-    const branchToggle = children.length
-      ? '<button type="button" class="compact-branch-toggle" aria-label="' + escapeHtml(t('Collapse branch')) + '" aria-expanded="true">−</button>'
-      : '<span class="compact-branch-spacer" aria-hidden="true"></span>';
-    const childList = children.length
-      ? '<ul class="compact-tree-children">' + children.map(renderPerson).join('') + '</ul>'
-      : '';
-
-    return '<li class="compact-tree-item">' +
-      '<div class="compact-person-row">' + branchToggle + photo +
-      '<button type="button" class="compact-person-name" data-person-id="' + person.id + '">' + escapeHtml(person.first_name) + '</button>' +
-      (children.length ? '<span class="compact-child-count">' + children.length + '</span>' : '') +
-      '</div>' + childList + '</li>';
-  };
-
-  $('compactTree').innerHTML = state.people.length
-    ? '<ul class="compact-tree-list">' + roots.map(renderPerson).join('') + '</ul>'
-    : '';
-  updateCompactTreeLabels();
-}
-
-function updateCompactTreeLabels() {
-  $('compactTree').querySelectorAll('.compact-branch-toggle').forEach((button) => {
-    button.setAttribute('aria-label', t(button.getAttribute('aria-expanded') === 'true' ? 'Collapse branch' : 'Expand branch'));
+function straightTreeLinkPaths(links) {
+  const childrenByParent = new Map();
+  links.forEach((link) => {
+    const parentId = link.source.data.id;
+    if (!childrenByParent.has(parentId)) childrenByParent.set(parentId, []);
+    childrenByParent.get(parentId).push(link);
   });
-  $('compactTree').querySelectorAll('.compact-photo-button').forEach((button) => {
-    const person = findPerson(button.dataset.personId);
-    if (person) button.setAttribute('aria-label', t('View photo of') + ' ' + person.first_name);
+
+  const paths = [];
+  childrenByParent.forEach((children) => {
+    const parent = children[0].source;
+    const parentRight = parent.y + 68;
+    if (children.length === 1) {
+      paths.push('M' + parentRight + ',' + parent.x + 'H' + (children[0].target.y - 68));
+      return;
+    }
+
+    const childLeft = children[0].target.y - 68;
+    const trunkX = (parentRight + childLeft) / 2;
+    const childYs = children.map((link) => link.target.x);
+    paths.push('M' + parentRight + ',' + parent.x + 'H' + trunkX);
+    paths.push('M' + trunkX + ',' + Math.min(...childYs) + 'V' + Math.max(...childYs));
+    children.forEach((link) => {
+      paths.push('M' + trunkX + ',' + link.target.x + 'H' + (link.target.y - 68));
+    });
   });
+  return paths;
 }
 
 function centerTree(nodes) {
@@ -624,11 +602,23 @@ function centerTree(nodes) {
   const svgEl = $('treeSvg');
   const w = svgEl.clientWidth || 800;
   const h = svgEl.clientHeight || 600;
-  const xs = nodes.map((d) => d.x);
-  const ys = nodes.map((d) => d.y);
+  const isStraight = state.treeLayout === 'straight';
+  const xs = nodes.map((d) => isStraight ? d.y : d.x);
+  const ys = nodes.map((d) => isStraight ? d.x : d.y);
   const minX = Math.min(...xs), maxX = Math.max(...xs);
   const minY = Math.min(...ys);
   const treeWidth = Math.max(maxX - minX, 1);
+  if (isStraight) {
+    const scale = Math.min(1, Math.max(0.35, (w - 120) / (treeWidth + 136)));
+    const firstRoot = nodes.find((d) => d.depth === 1);
+    const focusY = firstRoot ? firstRoot.x : (minY + Math.max(...ys)) / 2;
+    const tx = 70 - minX * scale;
+    const ty = h / 2 - focusY * scale;
+    d3.select('#treeSvg').transition().duration(200)
+      .call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+    return;
+  }
+
   const scale = Math.min(1, Math.max(0.35, (w - 140) / (treeWidth + NODE_W)));
   const tx = w / 2 - ((minX + maxX) / 2) * scale;
   const ty = 80 - minY * scale;
@@ -1089,7 +1079,10 @@ function personNodeSVG(d, photoMap, x, y) {
 }
 
 async function buildExportSvgString() {
-  const nodes = currentTreeNodes, links = currentTreeLinks;
+  const exportHierarchy = d3.hierarchy(buildForest(state.people), (d) => d.children);
+  d3.tree().nodeSize([NODE_W, NODE_H])(exportHierarchy);
+  const nodes = exportHierarchy.descendants().filter((d) => d.data.id !== '__virtual__');
+  const links = exportHierarchy.links().filter((link) => link.source.data.id !== '__virtual__');
   if (!nodes.length) return null;
 
   const photoMap = {};
