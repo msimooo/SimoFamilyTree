@@ -9,7 +9,7 @@ const state = {
   users: [],
   isPublicView: false,
   publicAccessEnabled: false,
-  treeLayout: localStorage.getItem('rootline-tree-layout') === 'classic' ? 'classic' : 'straight',
+  treeLayout: localStorage.getItem('rootline-tree-layout-v2') === 'classic' ? 'classic' : 'straight',
 };
 
 const arabicTranslations = {
@@ -466,7 +466,7 @@ function initTreeSvgIfNeeded() {
 
 function setTreeLayout(layout) {
   state.treeLayout = layout === 'classic' ? 'classic' : 'straight';
-  localStorage.setItem('rootline-tree-layout', state.treeLayout);
+  localStorage.setItem('rootline-tree-layout-v2', state.treeLayout);
   $('treeWrap').classList.toggle('straight-tree', state.treeLayout === 'straight');
   document.querySelectorAll('[data-tree-layout]').forEach((button) => {
     button.setAttribute('aria-pressed', String(button.dataset.treeLayout === state.treeLayout));
