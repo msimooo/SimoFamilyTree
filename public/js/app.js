@@ -9,9 +9,15 @@ const state = {
   users: [],
   isPublicView: false,
   publicAccessEnabled: false,
+  treeLayout: localStorage.getItem('rootline-tree-layout') === 'compact' ? 'compact' : 'classic',
 };
 
 const arabicTranslations = {
+  'Classic': 'تقليدي',
+  'Compact': 'مضغوط',
+  'Tree layout': 'تخطيط الشجرة',
+  'Expand branch': 'توسيع الفرع',
+  'Collapse branch': 'طيّ الفرع',
   'Sign in to view and manage your family tree': 'سجّل الدخول لعرض شجرة عائلتك وإدارتها',
   'Username': 'اسم المستخدم',
   'Password': 'كلمة المرور',
@@ -182,6 +188,7 @@ function applyLanguage() {
   document.querySelectorAll('[data-i18n-title]').forEach((el) => {
     el.title = t(el.dataset.i18nTitle);
   });
+  $('treeLayoutSwitch').setAttribute('aria-label', t('Tree layout'));
   if (!$('loginError').classList.contains('hidden') && $('loginError').dataset.message) {
     $('loginError').textContent = translateMessage($('loginError').dataset.message);
   }
@@ -203,6 +210,7 @@ function applyLanguage() {
     updatePersonMetadata(person);
     if (person) $('personPanel').querySelector('h2').textContent = person.first_name;
   }
+  updateCompactTreeLabels();
   if (relFormRelation) updateRelFormLabels();
   if (state.user && state.user.role === 'admin') renderUsersTable();
   if ($('publicSettingStatus').dataset.message) {
@@ -448,8 +456,49 @@ function initTreeSvgIfNeeded() {
   $('zoomInBtn').addEventListener('click', () => d3.select('#treeSvg').transition().duration(150).call(zoomBehavior.scaleBy, 1.25));
   $('zoomOutBtn').addEventListener('click', () => d3.select('#treeSvg').transition().duration(150).call(zoomBehavior.scaleBy, 0.8));
   $('zoomResetBtn').addEventListener('click', () => centerTree(currentTreeNodes));
+  document.querySelectorAll('[data-tree-layout]').forEach((button) => {
+    button.addEventListener('click', () => setTreeLayout(button.dataset.treeLayout));
+  });
+  $('compactTree').addEventListener('click', (event) => {
+    const toggle = event.target.closest('.compact-branch-toggle');
+    if (toggle) {
+      const children = toggle.parentElement.nextElementSibling;
+      const expanded = toggle.getAttribute('aria-expanded') === 'true';
+      children.hidden = expanded;
+      toggle.setAttribute('aria-expanded', String(!expanded));
+      toggle.setAttribute('aria-label', t(expanded ? 'Expand branch' : 'Collapse branch'));
+      toggle.textContent = expanded ? '+' : '−';
+      return;
+    }
 
-  window.addEventListener('resize', () => centerTree(currentTreeNodes));
+    const photoButton = event.target.closest('.compact-photo-button');
+    if (photoButton) {
+      const person = findPerson(photoButton.dataset.personId);
+      if (person) openPhotoPreview(person);
+      return;
+    }
+
+    const personButton = event.target.closest('.compact-person-name');
+    if (personButton) openPersonPanel(personButton.dataset.personId);
+  });
+
+  window.addEventListener('resize', () => {
+    if (state.treeLayout === 'classic') centerTree(currentTreeNodes);
+  });
+  setTreeLayout(state.treeLayout);
+}
+
+function setTreeLayout(layout) {
+  state.treeLayout = layout === 'compact' ? 'compact' : 'classic';
+  localStorage.setItem('rootline-tree-layout', state.treeLayout);
+  const isCompact = state.treeLayout === 'compact';
+  $('treeSvg').classList.toggle('hidden', isCompact);
+  $('compactTree').classList.toggle('hidden', !isCompact);
+  document.querySelector('.tree-controls').classList.toggle('hidden', isCompact);
+  document.querySelectorAll('[data-tree-layout]').forEach((button) => {
+    button.setAttribute('aria-pressed', String(button.dataset.treeLayout === state.treeLayout));
+  });
+  if (!isCompact) centerTree(currentTreeNodes);
 }
 
 function buildForest(people) {
@@ -487,6 +536,7 @@ function renderTree() {
 
   const g = d3.select('#treeRoot');
   g.selectAll('*').remove();
+  renderCompactTree();
 
   if (!people.length) { currentTreeNodes = []; currentTreeLinks = []; return; }
 
@@ -529,7 +579,44 @@ function renderTree() {
       openPersonPanel(d.data.id);
     });
 
-  centerTree(nodes);
+  if (state.treeLayout === 'classic') centerTree(nodes);
+}
+
+function renderCompactTree() {
+  const roots = buildForest(state.people).children;
+  const renderPerson = (person) => {
+    const children = person.children || [];
+    const photo = person.photo_path
+      ? '<button type="button" class="compact-avatar compact-photo-button" data-person-id="' + person.id + '" aria-label="' + escapeHtml(t('View photo of') + ' ' + person.first_name) + '"><img src="' + escapeHtml(person.photo_path) + '" alt=""></button>'
+      : '<span class="compact-avatar ' + escapeHtml(person.gender) + '">' + escapeHtml(initialsOf(person.first_name)) + '</span>';
+    const branchToggle = children.length
+      ? '<button type="button" class="compact-branch-toggle" aria-label="' + escapeHtml(t('Collapse branch')) + '" aria-expanded="true">−</button>'
+      : '<span class="compact-branch-spacer" aria-hidden="true"></span>';
+    const childList = children.length
+      ? '<ul class="compact-tree-children">' + children.map(renderPerson).join('') + '</ul>'
+      : '';
+
+    return '<li class="compact-tree-item">' +
+      '<div class="compact-person-row">' + branchToggle + photo +
+      '<button type="button" class="compact-person-name" data-person-id="' + person.id + '">' + escapeHtml(person.first_name) + '</button>' +
+      (children.length ? '<span class="compact-child-count">' + children.length + '</span>' : '') +
+      '</div>' + childList + '</li>';
+  };
+
+  $('compactTree').innerHTML = state.people.length
+    ? '<ul class="compact-tree-list">' + roots.map(renderPerson).join('') + '</ul>'
+    : '';
+  updateCompactTreeLabels();
+}
+
+function updateCompactTreeLabels() {
+  $('compactTree').querySelectorAll('.compact-branch-toggle').forEach((button) => {
+    button.setAttribute('aria-label', t(button.getAttribute('aria-expanded') === 'true' ? 'Collapse branch' : 'Expand branch'));
+  });
+  $('compactTree').querySelectorAll('.compact-photo-button').forEach((button) => {
+    const person = findPerson(button.dataset.personId);
+    if (person) button.setAttribute('aria-label', t('View photo of') + ' ' + person.first_name);
+  });
 }
 
 function centerTree(nodes) {

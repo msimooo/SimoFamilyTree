@@ -51,6 +51,7 @@ The script reads the SQLite database without modifying it, stores photos in Post
 and refuses to overwrite existing people or non-default accounts in Neon. It permits a
 fresh database, including the default `admin` account created at first app startup. If a
 referenced photo file is missing, the migration stops rather than silently dropping it.
+Older SQLite databases without a `settings` table retain the default private-tree setting.
 Verify the migrated accounts, people, and photos in the app before changing Render's
 `DATABASE_URL` or directing users to the new deployment.
 

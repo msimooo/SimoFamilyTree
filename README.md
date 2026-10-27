@@ -86,6 +86,9 @@ family information and photos to anyone who can access the site.
   - Delete them (if they have descendants, you'll be asked whether to delete the entire
     branch or trim the children first)
 - Drag to pan, use the **+ / − / ⤢** controls (bottom-left) to zoom and re-center.
+- Use **Classic / Compact** above the tree to switch between the original diagram and a
+  vertically arranged outline. In Compact view, use the **+ / −** buttons beside people to
+  expand or collapse their descendants. Your layout choice is saved in this browser.
 
 ## Exporting, printing, and moving your tree to another device
 

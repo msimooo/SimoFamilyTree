@@ -69,7 +69,12 @@
   <input type="file" id="importFileInput" accept=".json,application/json" class="hidden">
 
   <div class="tree-wrap" id="treeWrap">
+    <div class="tree-layout-switch" id="treeLayoutSwitch" role="group" aria-label="Tree layout">
+      <button type="button" class="tree-layout-btn" data-tree-layout="classic" aria-pressed="true" data-i18n="Classic">Classic</button>
+      <button type="button" class="tree-layout-btn" data-tree-layout="compact" aria-pressed="false" data-i18n="Compact">Compact</button>
+    </div>
     <svg id="treeSvg"><g id="treeRoot"></g></svg>
+    <div class="compact-tree-view hidden" id="compactTree"></div>
 
     <div class="tree-controls">
       <button class="zoom-btn" id="zoomInBtn" title="Zoom in" data-i18n-title="Zoom in">＋</button>

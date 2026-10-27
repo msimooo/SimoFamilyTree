@@ -43,7 +43,12 @@ function loadSource() {
     const users = source.prepare(
       'SELECT id, username, password_hash, display_name, role, created_at FROM users ORDER BY id'
     ).all();
-    const settings = source.prepare('SELECT key, value FROM settings').all();
+    const hasSettingsTable = source.prepare(
+      "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'settings'"
+    ).get();
+    const settings = hasSettingsTable
+      ? source.prepare('SELECT key, value FROM settings').all()
+      : [];
     const people = source.prepare(
       `SELECT id, first_name, gender, father_id, photo_path, created_by, created_at, updated_at
        FROM people ORDER BY id`
