@@ -344,6 +344,8 @@ a{color:var(--gold-dark)}
 @media (max-width: 640px){
   .side-panel{width:100%}
   .brand-name{display:none}
+  .tree-layout-switch{left:8px;right:8px}
+  .tree-layout-btn{flex:1;padding:7px 6px;font-size:11px}
 }
 
 html[lang="ar"] body,
@@ -366,6 +368,9 @@ html[dir="rtl"] .export-menu-item{text-align:right}
 html[dir="rtl"] .tree-controls{left:auto;right:20px}
 html[dir="rtl"] .fab-add-ancestor{right:auto;left:20px}
 html[dir="rtl"] .tree-layout-switch{left:auto;right:20px}
+@media (max-width: 640px){
+  html[dir="rtl"] .tree-layout-switch{left:8px;right:8px}
+}
 html[dir="rtl"] .side-panel{
   right:auto;left:0;border-left:0;border-right:1px solid var(--line);transform:translateX(-100%);
 }

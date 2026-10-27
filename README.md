@@ -86,9 +86,10 @@ family information and photos to anyone who can access the site.
   - Delete them (if they have descendants, you'll be asked whether to delete the entire
     branch or trim the children first)
 - Drag to pan, use the **+ / − / ⤢** controls (bottom-left) to zoom and re-center.
-- Use **Straight lines / Classic** above the tree to switch between a left-to-right family
-  diagram with compact person cards and right-angle connectors, and the original diagram.
-  Your layout choice is saved in this browser.
+- Use **Top to bottom / Left to right / Classic** above the tree to switch between compact
+  family diagrams with right-angle connectors and the original diagram. Top to bottom puts
+  the oldest ancestor at the top, with later generations below. Your layout choice is saved
+  in this browser.
 
 ## Exporting, printing, and moving your tree to another device
 

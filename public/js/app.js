@@ -9,12 +9,15 @@ const state = {
   users: [],
   isPublicView: false,
   publicAccessEnabled: false,
-  treeLayout: localStorage.getItem('rootline-tree-layout-v2') === 'classic' ? 'classic' : 'straight',
+  treeLayout: ['classic', 'straight'].includes(localStorage.getItem('rootline-tree-layout-v4'))
+    ? localStorage.getItem('rootline-tree-layout-v4')
+    : 'top-down',
 };
 
 const arabicTranslations = {
   'Classic': 'تقليدي',
-  'Straight lines': 'خطوط مستقيمة',
+  'Left to right': 'من اليسار إلى اليمين',
+  'Top to bottom': 'من الأعلى إلى الأسفل',
   'Tree layout': 'تخطيط الشجرة',
   'Sign in to view and manage your family tree': 'سجّل الدخول لعرض شجرة عائلتك وإدارتها',
   'Username': 'اسم المستخدم',
@@ -465,9 +468,10 @@ function initTreeSvgIfNeeded() {
 }
 
 function setTreeLayout(layout) {
-  state.treeLayout = layout === 'classic' ? 'classic' : 'straight';
-  localStorage.setItem('rootline-tree-layout-v2', state.treeLayout);
-  $('treeWrap').classList.toggle('straight-tree', state.treeLayout === 'straight');
+  state.treeLayout = ['classic', 'straight'].includes(layout) ? layout : 'top-down';
+  localStorage.setItem('rootline-tree-layout-v4', state.treeLayout);
+  zoomBehavior.scaleExtent([0.3, 2.2]);
+  $('treeWrap').classList.toggle('straight-tree', state.treeLayout !== 'classic');
   document.querySelectorAll('[data-tree-layout]').forEach((button) => {
     button.setAttribute('aria-pressed', String(button.dataset.treeLayout === state.treeLayout));
   });
@@ -521,9 +525,12 @@ function renderTree() {
 
   const hierarchyData = d3.hierarchy(buildForest(people), (d) => d.children);
   const isStraight = state.treeLayout === 'straight';
-  const cardWidth = isStraight ? 136 : NODE_W;
-  const cardHeight = isStraight ? 52 : NODE_H;
-  const layout = d3.tree().nodeSize(isStraight ? [68, 190] : [NODE_W, NODE_H]);
+  const isCompactLines = isStraight || state.treeLayout === 'top-down';
+  const cardWidth = isCompactLines ? 136 : NODE_W;
+  const cardHeight = isCompactLines ? 52 : NODE_H;
+  const layout = d3.tree().nodeSize(
+    isStraight ? [68, 190] : state.treeLayout === 'top-down' ? [170, 145] : [NODE_W, NODE_H]
+  );
   layout(hierarchyData);
 
   const nodes = hierarchyData.descendants().filter((d) => d.data.id !== '__virtual__');
@@ -531,14 +538,14 @@ function renderTree() {
   currentTreeNodes = nodes;
   currentTreeLinks = links;
 
-  const linkPaths = isStraight
-    ? straightTreeLinkPaths(links)
+  const linkPaths = isCompactLines
+    ? straightTreeLinkPaths(links, isStraight, cardWidth, cardHeight)
     : links.map((link) => d3.linkVertical().x((d) => d.x).y((d) => d.y)(link));
   g.selectAll('path.tree-link')
     .data(linkPaths)
     .enter()
     .append('path')
-    .attr('class', 'tree-link' + (isStraight ? ' tree-link-straight' : ''))
+    .attr('class', 'tree-link' + (isCompactLines ? ' tree-link-straight' : ''))
     .attr('d', (path) => path);
 
   const nodeSel = g.selectAll('g.tree-node')
@@ -554,8 +561,8 @@ function renderTree() {
     .attr('width', cardWidth)
     .attr('height', cardHeight)
     .append('xhtml:div')
-    .attr('class', (d) => 'person-node ' + d.data.gender + (isStraight ? ' straight-person-node' : ''))
-    .html((d) => personNodeHTML(d.data, isStraight))
+    .attr('class', (d) => 'person-node ' + d.data.gender + (isCompactLines ? ' straight-person-node' : ''))
+    .html((d) => personNodeHTML(d.data, isCompactLines))
     .on('click', (event, d) => {
       if (event.target.closest('.person-photo-button')) {
         event.stopPropagation();
@@ -568,7 +575,7 @@ function renderTree() {
   centerTree(nodes);
 }
 
-function straightTreeLinkPaths(links) {
+function straightTreeLinkPaths(links, horizontal, cardWidth, cardHeight) {
   const childrenByParent = new Map();
   links.forEach((link) => {
     const parentId = link.source.data.id;
@@ -579,20 +586,37 @@ function straightTreeLinkPaths(links) {
   const paths = [];
   childrenByParent.forEach((children) => {
     const parent = children[0].source;
-    const parentRight = parent.y + 68;
-    if (children.length === 1) {
-      paths.push('M' + parentRight + ',' + parent.x + 'H' + (children[0].target.y - 68));
-      return;
-    }
+    if (horizontal) {
+      const parentX = parent.y;
+      const parentY = parent.x;
+      const parentEdge = parentX + cardWidth / 2;
+      const childEdge = children[0].target.y - cardWidth / 2;
+      if (children.length === 1) {
+        paths.push('M' + parentEdge + ',' + parentY + 'H' + childEdge);
+        return;
+      }
 
-    const childLeft = children[0].target.y - 68;
-    const trunkX = (parentRight + childLeft) / 2;
-    const childYs = children.map((link) => link.target.x);
-    paths.push('M' + parentRight + ',' + parent.x + 'H' + trunkX);
-    paths.push('M' + trunkX + ',' + Math.min(...childYs) + 'V' + Math.max(...childYs));
-    children.forEach((link) => {
-      paths.push('M' + trunkX + ',' + link.target.x + 'H' + (link.target.y - 68));
-    });
+      const trunkX = (parentEdge + childEdge) / 2;
+      const childYs = children.map((link) => link.target.x);
+      paths.push('M' + parentEdge + ',' + parentY + 'H' + trunkX);
+      paths.push('M' + trunkX + ',' + Math.min(...childYs) + 'V' + Math.max(...childYs));
+      children.forEach((link) => paths.push('M' + trunkX + ',' + link.target.x + 'H' + (link.target.y - cardWidth / 2)));
+    } else {
+      const parentX = parent.x;
+      const parentY = parent.y;
+      const parentEdge = parentY + cardHeight / 2;
+      const childEdge = children[0].target.y - cardHeight / 2;
+      if (children.length === 1) {
+        paths.push('M' + parentX + ',' + parentEdge + 'V' + childEdge);
+        return;
+      }
+
+      const trunkY = (parentEdge + childEdge) / 2;
+      const childXs = children.map((link) => link.target.x);
+      paths.push('M' + parentX + ',' + parentEdge + 'V' + trunkY);
+      paths.push('M' + Math.min(...childXs) + ',' + trunkY + 'H' + Math.max(...childXs));
+      children.forEach((link) => paths.push('M' + link.target.x + ',' + trunkY + 'V' + (link.target.y - cardHeight / 2)));
+    }
   });
   return paths;
 }
@@ -603,11 +627,23 @@ function centerTree(nodes) {
   const w = svgEl.clientWidth || 800;
   const h = svgEl.clientHeight || 600;
   const isStraight = state.treeLayout === 'straight';
+  const isTopDown = state.treeLayout === 'top-down';
   const xs = nodes.map((d) => isStraight ? d.y : d.x);
   const ys = nodes.map((d) => isStraight ? d.x : d.y);
   const minX = Math.min(...xs), maxX = Math.max(...xs);
   const minY = Math.min(...ys);
   const treeWidth = Math.max(maxX - minX, 1);
+  if (isTopDown) {
+    const scale = Math.min(1, Math.max(0.3, (w - 120) / (treeWidth + 136)));
+    const roots = nodes.filter((d) => d.depth === 1);
+    const rootXs = roots.map((d) => d.x);
+    const rootCenter = (Math.min(...rootXs) + Math.max(...rootXs)) / 2;
+    const tx = w / 2 - rootCenter * scale;
+    const ty = 100 - minY * scale;
+    d3.select('#treeSvg')
+      .call(zoomBehavior.transform, d3.zoomIdentity.translate(tx, ty).scale(scale));
+    return;
+  }
   if (isStraight) {
     const scale = Math.min(1, Math.max(0.35, (w - 120) / (treeWidth + 136)));
     const firstRoot = nodes.find((d) => d.depth === 1);
